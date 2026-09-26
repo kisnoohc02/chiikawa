@@ -4,6 +4,7 @@
   "use strict";
 
   const SAVE_KEY = "monggle_v1";
+  const THEME_KEY = "hachiware_theme";
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -35,15 +36,51 @@
   const sndBad = () => beep(180, .18, "sawtooth", .12);
   const sndWin = () => { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, .12, "triangle"), i * 110)); };
 
-  /* ---------- 탭 네비게이션 ---------- */
-  $$(".tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      const view = tab.dataset.view;
-      $$(".tab").forEach(t => t.classList.toggle("is-active", t === tab));
-      $$(".view").forEach(v => v.classList.toggle("is-active", v.id === "view-" + view));
-      if (view === "catch") stopCatch();
+  /* ---------- 놀아주기 / 게임 / 게임 선택 ---------- */
+  function showView(view) {
+    const previous = $(".view.is-active")?.id.slice(5);
+    if (previous === "catch" && view !== "catch") stopCatch();
+    if (previous === "memory" && view !== "memory") {
+      clearInterval(memTimer);
+      memStarted = false;
+    }
+    $$(".view").forEach(v => v.classList.toggle("is-active", v.id === "view-" + view));
+    $$(".tab").forEach(tab => {
+      const active = tab.dataset.view === (view === "play" ? "play" : "games");
+      tab.classList.toggle("is-active", active);
+      if (active) tab.setAttribute("aria-current", "page");
+      else tab.removeAttribute("aria-current");
     });
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+  $$(".tab").forEach(tab => tab.addEventListener("click", () => showView(tab.dataset.view)));
+  $$("[data-open-game]").forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.openGame)));
+  $$("[data-back-games]").forEach(btn => btn.addEventListener("click", () => showView("games")));
+
+  /* ---------- 라이트 / 다크 모드 ---------- */
+  const themeBtn = $("#themeToggle");
+  const themeMeta = $('meta[name="theme-color"]');
+  let darkMode = false;
+  try {
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    darkMode = savedTheme === null
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+      : savedTheme === "dark";
+  } catch {}
+  function renderTheme() {
+    document.documentElement.dataset.theme = darkMode ? "dark" : "light";
+    themeBtn.textContent = darkMode ? "☀️" : "🌙";
+    themeBtn.setAttribute("aria-label", darkMode ? "라이트 모드 켜기" : "다크 모드 켜기");
+    themeBtn.title = themeBtn.getAttribute("aria-label");
+    themeBtn.setAttribute("aria-pressed", String(darkMode));
+    themeMeta?.setAttribute("content", darkMode ? "#202f3b" : "#c8eff6");
+  }
+  themeBtn.addEventListener("click", () => {
+    darkMode = !darkMode;
+    renderTheme();
+    try { localStorage.setItem(THEME_KEY, darkMode ? "dark" : "light"); } catch {}
   });
+  renderTheme();
 
   /* ================= 마스코트 인터랙션 ================= */
   const wrap = $("#mascotWrap");
@@ -54,17 +91,18 @@
   const tapHint = $("#tapHint");
 
   const MOUTH = {
-    smile: "M92 125 Q100 133 108 125",
-    big:   "M88 124 Q100 140 112 124 Q100 145 88 124 Z",
-    o:     "M100 131 m-6 0 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0",
-    flat:  "M91 130 L109 130",
-    sad:   "M92 134 Q100 126 108 134",
+    smile: "M251 297 Q257 315 269 305 Q276 323 286 306 L291 299 M270 305 Q271 294 278 293",
+    big:   "M251 298 Q269 339 292 298 Q273 350 251 298 Z",
+    o:     "M269 304 a12 15 0 1 0 1 0 Z",
+    flat:  "M258 312 Q270 315 283 310",
+    sad:   "M257 317 Q270 305 283 319",
   };
   function setMouth(k) { mouth.setAttribute("d", MOUTH[k]); }
 
   function renderMood() {
     const m = Math.max(0, Math.min(100, state.mood));
     moodFill.style.width = m + "%";
+    $("#moodBar").setAttribute("aria-valuenow", m);
     totalPokes.textContent = state.pokes;
     if (m >= 75) { moodEmoji.textContent = "😍"; moodText.textContent = "완전 행복해!"; setMouth("big"); }
     else if (m >= 45) { moodEmoji.textContent = "😊"; moodText.textContent = "기분 좋아!"; setMouth("smile"); }
@@ -145,11 +183,16 @@
 
   /* 사운드 토글 */
   const soundBtn = $("#soundToggle");
-  function renderSound() { soundBtn.textContent = state.sound ? "🔔" : "🔕"; soundBtn.classList.toggle("off", !state.sound); }
+  function renderSound() { soundBtn.textContent = state.sound ? "🔔" : "🔕"; soundBtn.classList.toggle("off", !state.sound); soundBtn.setAttribute("aria-label", state.sound ? "소리 끄기" : "소리 켜기"); soundBtn.title = soundBtn.getAttribute("aria-label"); }
   soundBtn.addEventListener("click", () => { state.sound = !state.sound; renderSound(); save(); if (state.sound) sndPoke(); });
 
   /* ================= 미니게임 1: 하치와레 잡기 ================= */
-  const MASCOT_SVG = `<svg viewBox="0 0 100 110" role="img" aria-label="하치와레"><path d="M17 44 14 10 Q14 5 19 9 L34 25 Q50 19 66 25 L81 9 Q86 5 86 10 L83 44 Q94 57 85 76 Q76 95 50 96 Q24 95 15 76 Q6 57 17 44Z" fill="#fff" stroke="#476176" stroke-width="2"/><path d="M17 44 14 10 Q14 5 19 9 L34 25 Q50 19 66 25 L81 9 Q86 5 86 10 L83 44 Q74 49 67 44 Q57 39 50 55 Q43 39 33 44 Q26 49 17 44Z" fill="#78b8d9" stroke="#476176" stroke-width="1.5"/><ellipse cx="36" cy="68" rx="3" ry="4.5" fill="#344957"/><ellipse cx="64" cy="68" rx="3" ry="4.5" fill="#344957"/><ellipse cx="24" cy="76" rx="6" ry="4" fill="#f4b5c5"/><ellipse cx="76" cy="76" rx="6" ry="4" fill="#f4b5c5"/><path d="M48 77 Q50 75 52 77 M45 82 Q50 87 55 82" fill="none" stroke="#344957" stroke-width="2" stroke-linecap="round"/></svg>`;
+  // 잡기 게임도 메인과 동일한 그림을 사용한다. 복제본의 id는 제거한다.
+  const gameMascot = $("#mascot").cloneNode(true);
+  gameMascot.removeAttribute("id");
+  gameMascot.querySelector("#eyesClosed")?.remove();
+  gameMascot.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+  const MASCOT_SVG = gameMascot.outerHTML;
   const BOMB_SVG = `<svg viewBox="0 0 100 110"><circle cx="50" cy="64" r="30" fill="#3a3a44"/><rect x="46" y="26" width="8" height="12" rx="3" fill="#555"/><path d="M54 26 Q64 16 68 24" fill="none" stroke="#e08a2e" stroke-width="3" stroke-linecap="round"/><circle cx="69" cy="22" r="4" fill="#ffcf4d"/><circle cx="40" cy="60" r="4" fill="#fff" opacity=".5"/></svg>`;
 
   const holeGrid = $("#holeGrid");
@@ -230,7 +273,14 @@
     }
     setTimeout(() => alert(msg), 100);
   }
-  function stopCatch() { if (catchRunning) endCatch(); }
+  function stopCatch() {
+    if (!catchRunning) return;
+    catchRunning = false;
+    clearInterval(catchTimer); clearTimeout(popTimer);
+    $$(".hole", holeGrid).forEach(h => h.classList.remove("up"));
+    catchStartBtn.textContent = "게임 시작 ▶";
+    catchStartBtn.disabled = false;
+  }
   catchStartBtn.addEventListener("click", startCatch);
 
   /* ================= 미니게임 2: 카드 짝맞추기 ================= */
