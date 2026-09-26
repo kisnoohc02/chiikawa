@@ -9,13 +9,82 @@
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
   /* ---------- 저장 ---------- */
-  const defaultState = { pokes: 0, mood: 70, catchBest: 0, memBest: null, sound: true };
+  const LEVELS = Object.fromEntries(Array.from({ length: 10 }, (_, i) => {
+    const n = i + 1;
+    return [`lv${n}`, { label: `Lv${n}`, n,
+      catch: { target: 6 + n * 2, bombs: .08 + n * .025, interval: Math.max(420, 1140 - n * 70), stay: Math.max(610, 1560 - n * 95) },
+      memory: { pairs: Math.min(8, 3 + Math.ceil(n / 2)), seconds: Math.max(42, 103 - n * 6), moves: Math.max(11, 12 + Math.ceil(n / 2) * 3 - Math.floor(n / 3)) },
+    }];
+  }));
+  const rewardFor = (level, seconds) => Math.max(5, Math.round(level * (8 + Math.min(600, Math.max(20, seconds)) * .45)));
+  const levelKeys = Object.keys(LEVELS);
+  const emptyRecord = () => ({
+    catch: Object.fromEntries(levelKeys.map(k => [k, { best: 0, clears: 0 }])),
+    memory: Object.fromEntries(levelKeys.map(k => [k, { bestMoves: null, bestTime: null, clears: 0 }])),
+  });
+  const defaultState = { pokes: 0, mood: 70, catchBest: 0, memBest: null, sound: true, coins: 30,
+    owned: {}, equipped: { accessory: null, wallpaper: null, theme: null }, records: emptyRecord(), boardRecords: { omok: {}, chess: {} } };
   let state = load();
   function load() {
-    try { return { ...defaultState, ...JSON.parse(localStorage.getItem(SAVE_KEY) || "{}") }; }
-    catch { return { ...defaultState }; }
+    try {
+      const old = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}");
+      const records = emptyRecord();
+      for (const game of ["catch", "memory"]) for (const level of levelKeys) {
+        Object.assign(records[game][level], old.records?.[game]?.[level] || {});
+      }
+      if (old.records && !old.records.catch?.lv1) {
+        for (const [legacy, level] of [["easy", "lv2"], ["normal", "lv5"], ["hard", "lv8"]]) {
+          Object.assign(records.catch[level], old.records.catch?.[legacy] || {});
+          Object.assign(records.memory[level], old.records.memory?.[legacy] || {});
+        }
+      } else if (!old.records) {
+        records.catch.lv5.best = Number(old.catchBest) || 0;
+        records.memory.lv5.bestMoves = old.memBest ?? null;
+      }
+      return { ...defaultState, ...old, coins: Number.isFinite(old.coins) ? Math.max(0, Math.floor(old.coins)) : 30,
+        owned: old.owned && typeof old.owned === "object" ? old.owned : {},
+        equipped: { ...defaultState.equipped, ...(old.equipped || {}) }, records,
+        boardRecords: { omok: {}, chess: {}, ...(old.boardRecords || {}) } };
+    } catch { return { ...defaultState, records: emptyRecord() }; }
   }
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch {} }
+  const ITEMS = [
+    { id: "ribbon", name: "분홍 리본", icon: "🎀", category: "accessory" },
+    { id: "flower", name: "작은 꽃", icon: "🌼", category: "accessory" },
+    { id: "star", name: "반짝 별", icon: "⭐", category: "accessory" },
+    { id: "clover", name: "네잎클로버", icon: "🍀", category: "accessory" },
+    { id: "picnic", name: "소풍 들판", icon: "🌿", category: "wallpaper" },
+    { id: "flowerfield", name: "꽃밭", icon: "🌷", category: "wallpaper" },
+    { id: "moonlit", name: "달빛 밤", icon: "🌙", category: "wallpaper" },
+    { id: "berry", name: "딸기빛 테마", icon: "🍓", category: "theme" },
+    { id: "forest", name: "숲빛 테마", icon: "🌳", category: "theme" },
+    { id: "lavender", name: "저녁빛 테마", icon: "🪻", category: "theme" },
+    { id: "riceball", name: "주먹밥", icon: "🍙", category: "food", mood: 12 },
+    { id: "pancake", name: "팬케이크", icon: "🥞", category: "food", mood: 25 },
+    { id: "strawberry", name: "딸기", icon: "🍓", category: "food", mood: 40 },
+    { id: "shell", name: "바다 조개", icon: "🐚", category: "item" },
+    { id: "acorn", name: "도토리", icon: "🌰", category: "item" },
+  ];
+  const SNACKS = [
+    { id: "riceball", price: 10 }, { id: "pancake", price: 20 }, { id: "strawberry", price: 35 },
+  ];
+  function itemById(id) { return ITEMS.find(item => item.id === id); }
+  let noticeTimer = null;
+  function notice(message) {
+    const box = $("#notice");
+    box.textContent = message; box.classList.add("show");
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => box.classList.remove("show"), 3600);
+  }
+  function renderWallet() {
+    $("#coinBalance").textContent = state.coins;
+    $("#inventoryCoins").textContent = state.coins;
+  }
+  function earn(amount) { state.coins += amount; save(); renderWallet(); }
+  function spend(amount) {
+    if (state.coins < amount) { notice(`동전이 ${amount - state.coins}개 부족해요. 게임에서 모아보세요!`); sndBad(); return false; }
+    state.coins -= amount; save(); renderWallet(); return true;
+  }
 
   /* ---------- 사운드 (WebAudio, 파일 없이 생성) ---------- */
   let audioCtx = null;
@@ -37,25 +106,30 @@
   const sndWin = () => { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, .12, "triangle"), i * 110)); };
 
   /* ---------- 놀아주기 / 게임 / 게임 선택 ---------- */
+  let boardGames = null;
+  let runner = null;
   function showView(view) {
     const previous = $(".view.is-active")?.id.slice(5);
     if (previous === "catch" && view !== "catch") stopCatch();
-    if (previous === "memory" && view !== "memory") {
-      clearInterval(memTimer);
-      memStarted = false;
-    }
+    if (previous === "memory" && view !== "memory") stopMemory();
+    if (["omok", "chess"].includes(previous) && previous !== view) boardGames?.leave(previous);
+    if (previous === "starlane" && view !== previous) runner?.leave();
+    if (view === "memory" && previous !== "memory" && memFinished) buildMemory();
     $$(".view").forEach(v => v.classList.toggle("is-active", v.id === "view-" + view));
     $$(".tab").forEach(tab => {
-      const active = tab.dataset.view === (view === "play" ? "play" : "games");
+      const active = tab.dataset.view === (view === "play" ? "play" : view === "items" ? "items" : "games");
       tab.classList.toggle("is-active", active);
       if (active) tab.setAttribute("aria-current", "page");
       else tab.removeAttribute("aria-current");
     });
+    if (["omok", "chess"].includes(view) && previous !== view) boardGames?.enter(view);
+    if (view === "starlane" && previous !== view) runner?.enter();
     window.scrollTo({ top: 0, behavior: "instant" });
   }
   $$(".tab").forEach(tab => tab.addEventListener("click", () => showView(tab.dataset.view)));
   $$("[data-open-game]").forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.openGame)));
   $$("[data-back-games]").forEach(btn => btn.addEventListener("click", () => showView("games")));
+  $$("[data-view-link]").forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.viewLink)));
 
   /* ---------- 라이트 / 다크 모드 ---------- */
   const themeBtn = $("#themeToggle");
@@ -188,9 +262,8 @@
     cancelAnimationFrame(springFrame);
     resetDeform();
     const point = svgPoint(e.clientX, e.clientY);
-    const targetSide = e.target.closest?.("[data-cheek]")?.dataset.cheek;
-    const side = targetSide || (Math.hypot(point.x - 175, point.y - 273) < 75 ? "left"
-      : Math.hypot(point.x - 362, point.y - 294) < 75 ? "right" : null);
+    const side = Math.hypot(point.x - 175, point.y - 273) < 75 ? "left"
+      : Math.hypot(point.x - 362, point.y - 294) < 75 ? "right" : null;
     drag = { pointerId: e.pointerId, start: point, side, dx: 0, dy: 0, moved: false };
     try { wrap.setPointerCapture(e.pointerId); } catch {}
     if (side) {
@@ -241,205 +314,302 @@
   });
   setInterval(() => { state.mood = Math.max(0, state.mood - 1); renderMood(); save(); }, 9000);
 
-  $("#btnPet").addEventListener("click", () => {
-    state.mood = Math.min(100, state.mood + 10);
-    react("closed", "content", "happy", 1200);
+  function feed(item) {
+    state.mood = Math.min(100, state.mood + item.mood);
     const r = wrap.getBoundingClientRect();
-    for (let i = 0; i < 3; i++) setTimeout(() => floatFx("💕", r.left + r.width * (.3 + Math.random() * .4), r.top + r.height * .35), i * 130);
-    sndHappy(); renderMood(); save();
-  });
-  $("#btnFeed").addEventListener("click", () => {
-    state.mood = Math.min(100, state.mood + 14);
-    const r = wrap.getBoundingClientRect();
-    floatFx("🍡", r.left + r.width / 2, r.top + r.height * .35);
+    floatFx(item.icon, r.left + r.width / 2, r.top + r.height * .35);
     react("happy", "happy", "bounce", 1250);
     sndHappy(); renderMood(); save();
+  }
+  function applyEquipment() {
+    const accessory = itemById(state.equipped.accessory);
+    const sprite = $("#accessorySprite");
+    sprite.textContent = accessory?.icon || "";
+    sprite.style.display = accessory ? "" : "none";
+    $(".mascot-stage").dataset.wallpaper = state.equipped.wallpaper || "default";
+    document.documentElement.dataset.worldTheme = state.equipped.theme || "default";
+  }
+  function renderInventory() {
+    const groups = [
+      ["accessory", "장신구", "하치와레에게 직접 달아줘요"],
+      ["wallpaper", "배경", "놀이터의 풍경을 바꿔요"],
+      ["theme", "색 테마", "화면 전체의 색감을 바꿔요"],
+      ["food", "간식", "뽑기로 받은 간식을 꺼내줘요"],
+      ["item", "소장품", "모험의 작은 기념품이에요"],
+    ];
+    $("#inventoryGrid").innerHTML = groups.map(([category, label, desc]) => {
+      const owned = ITEMS.filter(item => item.category === category && Number(state.owned[item.id]) > 0);
+      const cards = owned.map(item => {
+        const count = Math.max(0, Math.floor(Number(state.owned[item.id]) || 0));
+        const equipped = state.equipped[category] === item.id;
+        const action = category === "food" ? `<button class="mini-action" data-use="${item.id}">먹이기</button>`
+          : category === "item" ? "" : `<button class="mini-action" data-equip="${item.id}" ${equipped ? "disabled" : ""}>${equipped ? "장착 중" : "장착"}</button>`;
+        return `<div class="inventory-item"><span class="item-icon">${item.icon}</span><div><strong>${item.name}</strong><small>${category === "food" ? `기분 +${item.mood} · ` : ""}보유 ${count}개</small></div>${action}</div>`;
+      }).join("");
+      const reset = ["accessory", "wallpaper", "theme"].includes(category) && state.equipped[category]
+        ? `<button class="text-link" data-unequip="${category}">기본으로 되돌리기</button>` : "";
+      return `<section class="inventory-section"><div class="inventory-heading"><h3>${label}</h3><p>${desc}</p></div>${cards || '<p class="empty-note">아직 없어요. 랜덤 선물을 뽑아보세요.</p>'}${reset}</section>`;
+    }).join("");
+  }
+  $("#inventoryGrid").addEventListener("click", e => {
+    const equip = e.target.closest("[data-equip]");
+    const unequip = e.target.closest("[data-unequip]");
+    const use = e.target.closest("[data-use]");
+    if (equip) {
+      const item = itemById(equip.dataset.equip);
+      if (!item || !state.owned[item.id]) return;
+      state.equipped[item.category] = item.id;
+      applyEquipment(); renderInventory(); save(); notice(`${item.icon} ${item.name} 장착!`);
+    } else if (unequip) {
+      state.equipped[unequip.dataset.unequip] = null;
+      applyEquipment(); renderInventory(); save(); notice("기본 모습으로 돌아왔어요.");
+    } else if (use) {
+      const item = itemById(use.dataset.use);
+      if (!item || item.category !== "food" || !state.owned[item.id]) return;
+      state.owned[item.id]--;
+      showView("play");
+      feed(item); renderInventory(); save(); notice(`${item.name}을(를) 먹었어요!`);
+    }
   });
-  const GACHA = ["🎀 리본", "🍓 딸기", "⭐ 별사탕", "🧦 양말", "🍄 버섯", "👑 왕관", "🫧 비눗방울", "🌈 무지개"];
+  $("#snackShop").innerHTML = SNACKS.map(snack => {
+    const item = itemById(snack.id);
+    return `<button class="snack-option" data-snack="${snack.id}"><span class="snack-icon">${item.icon}</span><span><strong>${item.name}</strong><small>기분 +${item.mood}</small></span><b>🪙 ${snack.price}</b></button>`;
+  }).join("");
+  $("#snackShop").addEventListener("click", e => {
+    const button = e.target.closest("[data-snack]");
+    if (!button) return;
+    const snack = SNACKS.find(x => x.id === button.dataset.snack);
+    if (!snack || !spend(snack.price)) return;
+    const item = itemById(snack.id);
+    feed(item); notice(`${item.icon} ${item.name}을(를) 선물했어요! −${snack.price}동전`);
+  });
   $("#btnSpin").addEventListener("click", () => {
-    const prize = GACHA[Math.floor(Math.random() * GACHA.length)];
+    if (!spend(50)) return;
+    const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+    state.owned[item.id] = Math.max(0, Math.floor(Number(state.owned[item.id]) || 0)) + 1;
     const r = wrap.getBoundingClientRect();
     react("open", "surprise", "bounce", 1500);
     floatFx("🎁", r.left + r.width / 2, r.top + r.height * .3);
-    sndWin();
+    sndWin(); state.mood = Math.min(100, state.mood + 5); save(); renderInventory();
     setTimeout(() => {
       setFace("happy", "happy");
-      floatFx(prize.split(" ")[0], r.left + r.width / 2, r.top + r.height * .2);
-      moodText.textContent = prize + " 획득!"; moodEmoji.textContent = "🎉";
+      floatFx(item.icon, r.left + r.width / 2, r.top + r.height * .2);
+      notice(`${item.icon} ${item.name} 획득! 아이템 칸에서 확인하세요.`);
     }, 350);
-    state.mood = Math.min(100, state.mood + 5); save();
   });
+  applyEquipment(); renderWallet(); renderInventory();
 
   /* 사운드 토글 */
   const soundBtn = $("#soundToggle");
   function renderSound() { soundBtn.textContent = state.sound ? "🔔" : "🔕"; soundBtn.classList.toggle("off", !state.sound); soundBtn.setAttribute("aria-label", state.sound ? "소리 끄기" : "소리 켜기"); soundBtn.title = soundBtn.getAttribute("aria-label"); }
   soundBtn.addEventListener("click", () => { state.sound = !state.sound; renderSound(); save(); if (state.sound) sndPoke(); });
 
+  /* ================= 난이도와 기록 ================= */
+  let catchLevel = "lv1", memLevel = "lv1";
+  function renderDifficulty(game) {
+    const selected = game === "catch" ? catchLevel : memLevel;
+    const holder = $(game === "catch" ? "#catchDifficulty" : "#memDifficulty");
+    holder.innerHTML = levelKeys.map(key => `<button class="difficulty-btn ${selected === key ? "selected" : ""}" data-level="${key}" aria-pressed="${selected === key}">${LEVELS[key].label}</button>`).join("");
+    if (game === "catch") renderCatchInfo(); else renderMemoryInfo();
+  }
+  $("#catchDifficulty").addEventListener("click", e => {
+    const key = e.target.closest("[data-level]")?.dataset.level;
+    if (!key || catchRunning) return;
+    catchLevel = key; renderDifficulty("catch");
+    catchScore = 0; catchTime = 30; catchScoreEl.textContent = 0; catchTimeEl.textContent = 30;
+  });
+  $("#memDifficulty").addEventListener("click", e => {
+    const key = e.target.closest("[data-level]")?.dataset.level;
+    if (!key || (memStarted && !memFinished)) return;
+    memLevel = key; renderDifficulty("memory"); buildMemory();
+  });
+  function renderGameSummaries() {
+    $("#catchSummary").textContent = `총 클리어 ${levelKeys.reduce((n,k) => n + (state.records.catch[k].clears || 0), 0)}회`;
+    $("#memSummary").textContent = `총 클리어 ${levelKeys.reduce((n,k) => n + (state.records.memory[k].clears || 0), 0)}회`;
+  }
+
   /* ================= 미니게임 1: 하치와레 잡기 ================= */
-  // 잡기 게임도 메인과 동일한 그림을 사용한다. 복제본의 id는 제거한다.
-  const gameMascot = $("#mascot").cloneNode(true);
-  gameMascot.removeAttribute("id");
-  gameMascot.setAttribute("viewBox", "105 80 350 420");
-  gameMascot.querySelector("#eyesClosed")?.remove();
-  gameMascot.querySelectorAll("[data-cheek]").forEach(el => el.remove());
-  gameMascot.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
-  const MASCOT_SVG = gameMascot.outerHTML;
-  const BOMB_SVG = `<svg viewBox="0 0 100 110"><circle cx="50" cy="64" r="30" fill="#3a3a44"/><rect x="46" y="26" width="8" height="12" rx="3" fill="#555"/><path d="M54 26 Q64 16 68 24" fill="none" stroke="#e08a2e" stroke-width="3" stroke-linecap="round"/><circle cx="69" cy="22" r="4" fill="#ffcf4d"/><circle cx="40" cy="60" r="4" fill="#fff" opacity=".5"/></svg>`;
-
-  const holeGrid = $("#holeGrid");
-  const catchScoreEl = $("#catchScore"), catchTimeEl = $("#catchTime"), catchBestEl = $("#catchBest");
-  const catchStartBtn = $("#catchStart");
-  let catchScore = 0, catchTime = 30, catchTimer = null, popTimer = null, catchRunning = false;
-  const HOLES = 9;
-
+  function gameMascotSvg() {
+    const clone = $("#mascot").cloneNode(true);
+    clone.removeAttribute("id");
+    clone.setAttribute("viewBox", "105 80 350 420");
+    clone.querySelector("#bodyShape").setAttribute("d", BODY_BASE);
+    clone.querySelector("#eyes").style.display = "";
+    clone.querySelector("#mouth").setAttribute("d", MOUTH.smile);
+    clone.querySelectorAll("#eyesClosed, #eyesHappy, #eyesTense, #tongue").forEach(el => el.remove());
+    clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+    clone.style.transform = "";
+    return clone.outerHTML;
+  }
+  const BOMB_SVG = `<svg viewBox="0 0 100 110" aria-label="폭탄"><circle cx="50" cy="64" r="30" fill="#3a3a44"/><rect x="46" y="26" width="8" height="12" rx="3" fill="#555"/><path d="M54 26 Q64 16 68 24" fill="none" stroke="#e08a2e" stroke-width="3" stroke-linecap="round"/><circle cx="69" cy="22" r="4" fill="#ffcf4d"/><circle cx="40" cy="60" r="4" fill="#fff" opacity=".5"/></svg>`;
+  const holeGrid = $("#holeGrid"), catchScoreEl = $("#catchScore"), catchTimeEl = $("#catchTime");
+  const catchBestEl = $("#catchBest"), catchStartBtn = $("#catchStart");
+  let catchScore = 0, catchTime = 30, catchTimer = null, popTimer = null, catchRunning = false, catchRound = 0;
+  function renderCatchInfo() {
+    const level = LEVELS[catchLevel], record = state.records.catch[catchLevel];
+    $("#catchGoal").textContent = `30초 안에 ${level.catch.target}점 이상 · 폭탄 −3점 · 클리어 🪙${rewardFor(level.n, 30)}`;
+    catchBestEl.textContent = record.best || 0;
+    $("#catchRecord").textContent = `🏆 ${level.label} 최고 ${record.best || 0}점 · 누적 클리어 ${record.clears || 0}회`;
+  }
   function buildHoles() {
     holeGrid.innerHTML = "";
-    for (let i = 0; i < HOLES; i++) {
-      const hole = document.createElement("div");
-      hole.className = "hole";
-      const pop = document.createElement("div");
-      pop.className = "pop";
-      hole.appendChild(pop);
+    for (let i = 0; i < 9; i++) {
+      const hole = document.createElement("div"), pop = document.createElement("div");
+      hole.className = "hole"; pop.className = "pop"; hole.appendChild(pop);
       pop.addEventListener("pointerdown", e => {
         e.preventDefault();
         if (!catchRunning || !hole.classList.contains("up")) return;
-        if (pop.dataset.type === "bomb") {
-          catchScore = Math.max(0, catchScore - 3); sndBad();
-          pop.classList.add("bonk");
-        } else {
-          catchScore++; sndPoke(); pop.classList.add("bonk");
-          floatFx("+1", e.clientX, e.clientY);
-        }
-        catchScoreEl.textContent = catchScore;
-        hole.classList.remove("up");
+        if (pop.dataset.type === "bomb") { catchScore = Math.max(0, catchScore - 3); sndBad(); }
+        else { catchScore++; sndPoke(); floatFx("+1", e.clientX, e.clientY); }
+        pop.classList.add("bonk"); catchScoreEl.textContent = catchScore; hole.classList.remove("up");
       });
       holeGrid.appendChild(hole);
     }
   }
-  catchBestEl.textContent = state.catchBest;
-  buildHoles();
-
-  function popRandom() {
-    const holes = $$(".hole", holeGrid);
-    const idle = holes.filter(h => !h.classList.contains("up"));
+  function popRandom(round) {
+    if (!catchRunning || round !== catchRound) return;
+    const idle = $$(".hole", holeGrid).filter(h => !h.classList.contains("up"));
     if (!idle.length) return;
-    const hole = idle[Math.floor(Math.random() * idle.length)];
-    const pop = $(".pop", hole);
-    const isBomb = Math.random() < 0.22;
-    pop.dataset.type = isBomb ? "bomb" : "good";
-    pop.innerHTML = isBomb ? BOMB_SVG : MASCOT_SVG;
-    pop.classList.remove("bonk");
-    hole.classList.add("up");
-    const stay = 700 + Math.random() * 600;
-    setTimeout(() => hole.classList.remove("up"), stay);
+    const hole = idle[Math.floor(Math.random() * idle.length)], pop = $(".pop", hole);
+    const bomb = Math.random() < LEVELS[catchLevel].catch.bombs;
+    pop.dataset.type = bomb ? "bomb" : "good";
+    pop.innerHTML = bomb ? BOMB_SVG : gameMascotSvg();
+    pop.classList.remove("bonk"); hole.classList.add("up");
+    setTimeout(() => { if (round === catchRound) hole.classList.remove("up"); }, LEVELS[catchLevel].catch.stay);
   }
-
   function startCatch() {
     if (catchRunning) return;
-    catchRunning = true; catchScore = 0; catchTime = 30;
+    catchRunning = true; catchRound++; catchScore = 0; catchTime = 30;
     catchScoreEl.textContent = 0; catchTimeEl.textContent = 30;
     catchStartBtn.textContent = "진행 중…"; catchStartBtn.disabled = true;
-    try { audioCtx && audioCtx.resume(); } catch {}
+    $$("#catchDifficulty button").forEach(b => b.disabled = true);
+    const round = catchRound;
     catchTimer = setInterval(() => {
       catchTime--; catchTimeEl.textContent = catchTime;
       if (catchTime <= 0) endCatch();
     }, 1000);
     const loop = () => {
-      if (!catchRunning) return;
-      popRandom();
-      if (catchScore > 12 && Math.random() < 0.4) popRandom();
-      popTimer = setTimeout(loop, Math.max(420, 900 - catchScore * 12));
+      if (!catchRunning || round !== catchRound) return;
+      popRandom(round);
+      if (catchScore > 12 && Math.random() < .35) popRandom(round);
+      popTimer = setTimeout(loop, LEVELS[catchLevel].catch.interval);
     };
     loop();
   }
-  function endCatch() {
-    catchRunning = false;
+  function cleanCatch() {
+    catchRunning = false; catchRound++;
     clearInterval(catchTimer); clearTimeout(popTimer);
     $$(".hole", holeGrid).forEach(h => h.classList.remove("up"));
-    catchStartBtn.textContent = "다시 하기 ▶"; catchStartBtn.disabled = false;
-    let msg = `게임 끝! 점수 ${catchScore}점 🐱`;
-    if (catchScore > state.catchBest) {
-      state.catchBest = catchScore; catchBestEl.textContent = catchScore; save();
-      msg = `🎉 신기록 ${catchScore}점!`; sndWin();
-    }
-    setTimeout(() => alert(msg), 100);
-  }
-  function stopCatch() {
-    if (!catchRunning) return;
-    catchRunning = false;
-    clearInterval(catchTimer); clearTimeout(popTimer);
-    $$(".hole", holeGrid).forEach(h => h.classList.remove("up"));
-    catchStartBtn.textContent = "게임 시작 ▶";
+    $$("#catchDifficulty button").forEach(b => b.disabled = false);
     catchStartBtn.disabled = false;
   }
+  function endCatch() {
+    if (!catchRunning) return;
+    cleanCatch(); catchStartBtn.textContent = "다시 하기 ▶";
+    const record = state.records.catch[catchLevel], target = LEVELS[catchLevel].catch.target;
+    record.best = Math.max(record.best || 0, catchScore);
+    if (catchScore >= target) {
+      record.clears = (record.clears || 0) + 1;
+      const reward = rewardFor(LEVELS[catchLevel].n, 30);
+      earn(reward); sndWin();
+      notice(`클리어! ${catchScore}점 · 🪙${reward} 획득!`);
+    } else notice(`이번에는 ${catchScore}점! 목표 ${target}점에 다시 도전해요.`);
+    renderCatchInfo(); renderGameSummaries(); save();
+  }
+  function stopCatch() { if (catchRunning) { cleanCatch(); catchStartBtn.textContent = "게임 시작 ▶"; notice("하치와레 잡기를 중단했어요."); } }
   catchStartBtn.addEventListener("click", startCatch);
+  buildHoles(); renderDifficulty("catch");
 
   /* ================= 미니게임 2: 카드 짝맞추기 ================= */
-  const cardGrid = $("#cardGrid");
-  const memMovesEl = $("#memMoves"), memTimeEl = $("#memTime"), memBestEl = $("#memBest");
-  const EMOJIS = ["🐱", "🍡", "🎀", "🍓", "⭐", "🍄", "🌸", "🫧"];
-  let memMoves = 0, memFlipped = [], memMatched = 0, memTime = 0, memTimer = null, memLock = false, memStarted = false;
-
-  memBestEl.textContent = state.memBest == null ? "-" : state.memBest + "번";
-
+  const cardGrid = $("#cardGrid"), memMovesEl = $("#memMoves"), memTimeEl = $("#memTime");
+  const memBestEl = $("#memBest"), EMOJIS = ["🐱", "🍡", "🎀", "🍓", "⭐", "🍄", "🌸", "🫧"];
+  let memMoves = 0, memFlipped = [], memMatched = 0, memTime = 0, memTimer = null;
+  let memLock = false, memStarted = false, memFinished = false, memRound = 0;
+  function renderMemoryInfo() {
+    const level = LEVELS[memLevel], record = state.records.memory[memLevel];
+    $("#memGoal").textContent = `${level.memory.pairs}쌍 · ${level.memory.seconds}초 이내 · ${level.memory.moves}번 이내 · 클리어 약 🪙${rewardFor(level.n, Math.max(20, level.memory.seconds / 2))}~${rewardFor(level.n, level.memory.seconds)}`;
+    memBestEl.textContent = record.bestMoves == null ? "-" : record.bestMoves + "번";
+    $("#memRecord").textContent = `🏆 ${level.label} 최고 ${record.bestMoves ?? "-"}번 · 최단 ${record.bestTime == null ? "-" : record.bestTime + "초"} · 누적 클리어 ${record.clears || 0}회`;
+  }
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-
   function buildMemory() {
-    clearInterval(memTimer);
-    memMoves = 0; memFlipped = []; memMatched = 0; memTime = 0; memLock = false; memStarted = false;
+    memRound++; clearInterval(memTimer);
+    memMoves = 0; memFlipped = []; memMatched = 0; memTime = 0;
+    memLock = false; memStarted = false; memFinished = false;
     memMovesEl.textContent = 0; memTimeEl.textContent = 0;
-    const deck = shuffle([...EMOJIS, ...EMOJIS]);
+    $$("#memDifficulty button").forEach(b => b.disabled = false);
+    const icons = EMOJIS.slice(0, LEVELS[memLevel].memory.pairs);
     cardGrid.innerHTML = "";
-    deck.forEach(emoji => {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `<div class="card-inner">
-        <div class="card-face card-front">?</div>
-        <div class="card-face card-back">${emoji}</div>
-      </div>`;
+    shuffle([...icons, ...icons]).forEach(emoji => {
+      const card = document.createElement("button");
+      card.type = "button"; card.className = "card";
+      card.setAttribute("aria-label", "뒤집지 않은 카드");
+      card.innerHTML = `<span class="card-inner"><span class="card-face card-front">?</span><span class="card-face card-back">${emoji}</span></span>`;
       card.dataset.emoji = emoji;
       card.addEventListener("click", () => flipCard(card));
       cardGrid.appendChild(card);
     });
   }
   function startMemTimer() {
-    if (memStarted) return; memStarted = true;
-    memTimer = setInterval(() => { memTime++; memTimeEl.textContent = memTime; }, 1000);
+    if (memStarted) return;
+    memStarted = true;
+    $$("#memDifficulty button").forEach(b => b.disabled = true);
+    memTimer = setInterval(() => {
+      memTime++; memTimeEl.textContent = memTime;
+      if (memTime >= LEVELS[memLevel].memory.seconds) endMemory(false, "시간 초과!");
+    }, 1000);
   }
   function flipCard(card) {
-    if (memLock || card.classList.contains("flipped") || card.classList.contains("matched")) return;
-    startMemTimer();
-    card.classList.add("flipped"); sndPoke();
-    memFlipped.push(card);
-    if (memFlipped.length === 2) {
-      memMoves++; memMovesEl.textContent = memMoves; memLock = true;
-      const [a, b] = memFlipped;
-      if (a.dataset.emoji === b.dataset.emoji) {
-        setTimeout(() => {
-          a.classList.add("matched"); b.classList.add("matched");
-          memFlipped = []; memLock = false; memMatched++;
-          sndHappy();
-          if (memMatched === EMOJIS.length) finishMemory();
-        }, 350);
-      } else {
-        setTimeout(() => {
-          a.classList.remove("flipped"); b.classList.remove("flipped");
-          memFlipped = []; memLock = false;
-        }, 800);
-      }
+    if (memLock || memFinished || card.classList.contains("flipped") || card.classList.contains("matched")) return;
+    startMemTimer(); card.classList.add("flipped");
+    card.setAttribute("aria-label", `뒤집힌 카드 ${card.dataset.emoji}`);
+    sndPoke(); memFlipped.push(card);
+    if (memFlipped.length !== 2) return;
+    memMoves++; memMovesEl.textContent = memMoves; memLock = true;
+    const [a, b] = memFlipped, round = memRound;
+    if (a.dataset.emoji === b.dataset.emoji) {
+      setTimeout(() => {
+        if (round !== memRound || memFinished) return;
+        a.classList.add("matched"); b.classList.add("matched");
+        memFlipped = []; memLock = false; memMatched++; sndHappy();
+        if (memMatched === LEVELS[memLevel].memory.pairs) endMemory(memMoves <= LEVELS[memLevel].memory.moves, "뒤집기 횟수 초과!");
+        else if (memMoves >= LEVELS[memLevel].memory.moves) endMemory(false, "뒤집기 횟수 초과!");
+      }, 320);
+    } else {
+      setTimeout(() => {
+        if (round !== memRound || memFinished) return;
+        a.classList.remove("flipped"); b.classList.remove("flipped");
+        a.setAttribute("aria-label", "뒤집지 않은 카드"); b.setAttribute("aria-label", "뒤집지 않은 카드");
+        memFlipped = []; memLock = false;
+        if (memMoves >= LEVELS[memLevel].memory.moves) endMemory(false, "뒤집기 횟수 초과!");
+      }, 750);
     }
   }
-  function finishMemory() {
-    clearInterval(memTimer); sndWin();
-    let msg = `클리어! ${memMoves}번 · ${memTime}초 🎉`;
-    if (state.memBest == null || memMoves < state.memBest) {
-      state.memBest = memMoves; memBestEl.textContent = memMoves + "번"; save();
-      msg = `🏆 최소 뒤집기 신기록 ${memMoves}번!`;
-    }
-    setTimeout(() => alert(msg), 200);
+  function endMemory(won, reason) {
+    if (memFinished) return;
+    memFinished = true; memLock = true; clearInterval(memTimer);
+    $$("#memDifficulty button").forEach(b => b.disabled = false);
+    if (won) {
+      const record = state.records.memory[memLevel];
+      record.bestMoves = record.bestMoves == null ? memMoves : Math.min(record.bestMoves, memMoves);
+      record.bestTime = record.bestTime == null ? memTime : Math.min(record.bestTime, memTime);
+      record.clears = (record.clears || 0) + 1;
+      const reward = rewardFor(LEVELS[memLevel].n, memTime);
+      earn(reward); sndWin();
+      notice(`클리어! ${memMoves}번 · ${memTime}초 · 🪙${reward} 획득!`);
+      renderMemoryInfo(); renderGameSummaries(); save();
+    } else { sndBad(); notice(`${reason} 새 게임에서 다시 도전해요.`); }
+  }
+  function stopMemory() {
+    if (!memStarted || memFinished) return;
+    memRound++; clearInterval(memTimer); memFinished = true; memLock = true;
+    $$("#memDifficulty button").forEach(b => b.disabled = false);
+    notice("카드 게임을 중단했어요.");
   }
   $("#memReset").addEventListener("click", buildMemory);
-  buildMemory();
+  buildMemory(); renderDifficulty("memory"); renderGameSummaries();
+  boardGames = window.HachiBoardGames?.init({ state, save, earn, notice, sndWin, sndBad, sndPoke, rewardFor, showView });
+  runner = window.HachiStarlane?.init({ state, save, earn, notice, sndPoke, sndBad, sndWin });
 
   /* ---------- 초기 렌더 ---------- */
   renderMood();
