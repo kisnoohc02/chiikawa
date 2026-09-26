@@ -91,12 +91,12 @@
   const totalPokes = $("#totalPokes"), tapHint = $("#tapHint");
   const BODY_BASE = bodyShape.getAttribute("d");
   const MOUTH = {
-    smile: "M251 297 Q258 310 267 300 L273 307 Q282 310 291 298 M273 307 Q269 319 265 310",
-    happy: "M247 303 Q269 341 294 300 Q284 353 266 338 Q251 328 247 303 Z",
-    surprise: "M271 313 m-11 0 a11 14 0 1 0 22 0 a11 14 0 1 0 -22 0",
-    content: "M250 307 Q270 324 292 306",
-    pout: "M255 312 Q270 308 285 313",
-    sad: "M257 319 Q271 306 286 319",
+    smile: "M273 290 Q267 304 259 294 M273 290 Q280 304 291 292 M269 299 Q266 318 276 316 Q285 313 281 300",
+    happy: "M253 296 Q273 336 294 296 Q286 344 273 338 Q258 332 253 296 Z",
+    surprise: "M274 304 m-10 0 a10 13 0 1 0 20 0 a10 13 0 1 0 -20 0",
+    content: "M253 302 Q272 320 292 302",
+    pout: "M260 308 Q275 304 288 310",
+    sad: "M260 316 Q274 304 289 316",
   };
   let eyeMode = "open", reactionTimer = null, drag = null, springFrame = null;
   function setEyes(mode) {
@@ -166,11 +166,11 @@
   function deform(side, dx, dy) {
     let d = BODY_BASE;
     if (side === "left") {
-      d = d.replace("Q104 292 127 323 Q133 333 150 344", `Q${Math.round(104 + dx)} ${Math.round(292 + dy * .35)} ${Math.round(127 + dx * .8)} ${Math.round(323 + dy * .5)} Q${Math.round(133 + dx * .6)} ${Math.round(333 + dy * .5)} 150 344`);
+      d = d.replace("Q115 246 119 284 Q119 316 148 334", `Q${Math.round(115 + dx)} ${Math.round(246 + dy * .2)} ${Math.round(119 + dx)} ${Math.round(284 + dy * .4)} Q${Math.round(119 + dx * .8)} ${Math.round(316 + dy * .5)} 148 334`);
       cheekLeft.setAttribute("transform", `translate(${(dx * .48).toFixed(1)} ${(dy * .3).toFixed(1)})`);
       cheekRight.removeAttribute("transform");
     } else {
-      d = d.replace("Q448 317 442 277", `Q${Math.round(448 + dx)} ${Math.round(317 + dy * .4)} ${Math.round(442 + dx * .8)} ${Math.round(277 + dy * .5)}`);
+      d = d.replace("Q451 301 444 266", `Q${Math.round(451 + dx)} ${Math.round(301 + dy * .4)} ${Math.round(444 + dx * .8)} ${Math.round(266 + dy * .5)}`);
       cheekRight.setAttribute("transform", `translate(${(dx * .48).toFixed(1)} ${(dy * .3).toFixed(1)})`);
       cheekLeft.removeAttribute("transform");
     }
@@ -188,10 +188,11 @@
     cancelAnimationFrame(springFrame);
     resetDeform();
     const point = svgPoint(e.clientX, e.clientY);
-    const side = Math.hypot(point.x - 173, point.y - 278) < 62 ? "left"
-      : Math.hypot(point.x - 359, point.y - 299) < 62 ? "right" : null;
+    const targetSide = e.target.closest?.("[data-cheek]")?.dataset.cheek;
+    const side = targetSide || (Math.hypot(point.x - 175, point.y - 273) < 75 ? "left"
+      : Math.hypot(point.x - 362, point.y - 294) < 75 ? "right" : null);
     drag = { pointerId: e.pointerId, start: point, side, dx: 0, dy: 0, moved: false };
-    wrap.setPointerCapture(e.pointerId);
+    try { wrap.setPointerCapture(e.pointerId); } catch {}
     if (side) {
       clearTimeout(reactionTimer); reactionTimer = null;
       setFace("tense", "pout");
@@ -199,7 +200,7 @@
       tapHint.classList.add("hide");
     }
   });
-  wrap.addEventListener("pointermove", e => {
+  window.addEventListener("pointermove", e => {
     if (!drag || e.pointerId !== drag.pointerId || !drag.side) return;
     const point = svgPoint(e.clientX, e.clientY);
     const rawX = point.x - drag.start.x;
@@ -231,8 +232,8 @@
     floatFx("💙", e.clientX, e.clientY);
     sndHappy(); renderMood(); save();
   }
-  wrap.addEventListener("pointerup", finishPointer);
-  wrap.addEventListener("pointercancel", finishPointer);
+  window.addEventListener("pointerup", finishPointer);
+  window.addEventListener("pointercancel", finishPointer);
   wrap.addEventListener("keydown", e => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault(); const r = wrap.getBoundingClientRect(); pokeAt(r.left + r.width / 2, r.top + r.height / 2);
@@ -278,7 +279,9 @@
   // 잡기 게임도 메인과 동일한 그림을 사용한다. 복제본의 id는 제거한다.
   const gameMascot = $("#mascot").cloneNode(true);
   gameMascot.removeAttribute("id");
+  gameMascot.setAttribute("viewBox", "105 80 350 420");
   gameMascot.querySelector("#eyesClosed")?.remove();
+  gameMascot.querySelectorAll("[data-cheek]").forEach(el => el.remove());
   gameMascot.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
   const MASCOT_SVG = gameMascot.outerHTML;
   const BOMB_SVG = `<svg viewBox="0 0 100 110"><circle cx="50" cy="64" r="30" fill="#3a3a44"/><rect x="46" y="26" width="8" height="12" rx="3" fill="#555"/><path d="M54 26 Q64 16 68 24" fill="none" stroke="#e08a2e" stroke-width="3" stroke-linecap="round"/><circle cx="69" cy="22" r="4" fill="#ffcf4d"/><circle cx="40" cy="60" r="4" fill="#fff" opacity=".5"/></svg>`;

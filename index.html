@@ -36,34 +36,31 @@
 
         <div class="mascot-wrap" id="mascotWrap" role="button" tabindex="0" aria-label="하치와레를 누르거나 양 볼을 바깥으로 당겨보세요">
           <!-- 하치와레 SVG: 눈 깜빡임과 입 모양은 JS로 제어 -->
-          <svg id="mascot" class="mascot" viewBox="0 0 562 562" role="img" aria-label="하치와레 캐릭터">
-            <!-- 짧고 둥근 몸통과 발, 옆으로 나온 꼬리 -->
-            <path class="tail" d="M362 431 Q390 443 405 419 Q420 400 430 409 Q440 417 424 433 Q406 454 372 451Z" />
-            <path id="bodyShape" class="body" d="M184 169 Q145 180 125 234 Q104 292 127 323 Q133 333 150 344 Q127 337 129 354 Q133 371 158 370 Q162 373 167 383 Q165 423 198 447 Q176 451 181 465 Q188 481 216 454 Q251 475 291 468 Q298 469 303 483 Q306 501 318 491 Q329 480 324 464 Q362 447 381 415 Q389 399 391 384 Q386 366 382 351 Q382 338 392 330 Q400 324 407 333 Q413 343 402 361 Q419 357 427 345 Q448 317 442 277 Q439 232 411 203 Q371 182 323 181 Q273 166 223 173 Q203 164 184 169Z" />
-            <!-- 파란 두 갈래 머리 무늬 -->
-            <path class="blue-patch" d="M192 151 Q201 125 218 91 Q231 66 245 68 Q263 74 276 108 Q299 108 322 123 Q347 101 369 91 Q387 84 398 101 Q407 117 410 184 Q395 202 369 191 Q318 185 282 165 Q266 187 224 194 Q194 197 176 177 Q181 164 192 151Z" />
-            <path class="hair-line" d="M196 149 Q212 99 229 75 Q246 48 276 108 Q300 107 322 123 Q358 91 373 90 Q405 83 410 183 M176 177 Q194 197 224 194 Q266 187 282 165 Q318 185 369 191 Q395 202 410 184" />
-            <!-- 눈 위 점과 볼의 세 줄 -->
-            <ellipse class="brow" cx="228" cy="212" rx="4" ry="2.5" />
-            <ellipse class="brow" cx="315" cy="225" rx="6" ry="3" />
-            <g id="cheekLeft"><ellipse class="cheek" cx="173" cy="278" rx="29" ry="25" /><path class="blush-lines" d="M161 272 l-5 11 M172 271 l-5 13 M183 274 l-5 11" /></g>
-            <g id="cheekRight"><ellipse class="cheek" cx="359" cy="299" rx="30" ry="26" /><path class="blush-lines" d="M349 296 l-5 12 M360 296 l-5 12 M371 299 l-5 10" /></g>
+          <svg id="mascot" class="mascot" viewBox="0 0 568 564" role="img" aria-label="하치와레 캐릭터">
+            <!-- 첨부된 원본 그림의 비율과 손그림 선을 따라 그린 일러스트 -->
+            <path class="tail" d="M368 426 Q386 430 398 412 Q413 395 426 404 Q441 414 431 427 Q416 443 387 441 Q375 437 368 426Z" />
+            <path id="bodyShape" class="body" d="M179 165 Q152 177 136 208 Q115 246 119 284 Q119 316 148 334 Q132 328 130 341 Q130 356 158 364 Q164 363 168 375 Q171 412 198 433 Q183 441 182 455 Q183 469 198 468 Q211 466 220 449 Q254 464 297 461 Q303 469 305 480 Q308 494 319 486 Q329 477 328 456 Q366 442 383 414 Q392 398 393 376 Q394 366 383 356 Q378 344 387 332 Q396 322 404 331 Q413 343 414 357 Q429 339 433 333 Q451 301 444 266 Q439 229 413 202 Q393 184 364 179 Q324 163 286 171 Q244 163 215 172 Q192 158 179 165 Z" />
+            <path class="blue-patch" d="M195 144 Q207 113 224 96 Q232 87 241 92 Q262 102 276 136 Q304 134 326 145 Q355 122 374 115 Q390 109 400 126 Q411 149 415 180 Q416 196 410 204 Q398 219 372 211 Q319 202 286 173 Q268 192 229 191 Q195 191 177 174 Q179 160 195 144 Z" />
+            <path class="hair-line" d="M196 145 Q207 112 224 96 Q232 86 241 92 Q262 102 276 136 Q304 134 326 145 Q355 122 374 115 Q390 109 400 126 Q411 149 415 180 M178 173 Q199 190 229 191 Q268 192 286 173 Q319 202 372 211 Q398 219 410 204" />
+            <ellipse class="brow" cx="231" cy="206" rx="4.5" ry="2.5" />
+            <ellipse class="brow" cx="319" cy="218" rx="6" ry="2.8" />
+            <g id="cheekLeft"><ellipse class="cheek" cx="175" cy="273" rx="28" ry="23" /><path class="blush-lines" d="M163 266 l-5 12 M174 265 l-5 13 M185 268 l-5 11" /></g>
+            <g id="cheekRight"><ellipse class="cheek" cx="362" cy="294" rx="29" ry="23" /><path class="blush-lines" d="M352 289 l-5 12 M363 289 l-5 12 M374 292 l-5 10" /></g>
             <g id="eyes">
-              <ellipse class="eye" cx="223" cy="261" rx="21" ry="22" />
-              <ellipse class="eye" cx="320" cy="270" rx="21" ry="21" />
-              <ellipse class="eye-shine" cx="228" cy="253" rx="7" ry="5" />
-              <ellipse class="eye-shine" cx="324" cy="262" rx="7" ry="5" />
-              <circle class="eye-shine" cx="215" cy="269" r="3" />
-              <circle class="eye-shine" cx="313" cy="278" r="3" />
+              <path class="eye" d="M207 254 Q207 237 222 235 Q241 231 245 249 Q249 267 233 272 Q213 280 207 263Z" />
+              <path class="eye" d="M306 263 Q306 246 321 244 Q340 242 345 258 Q349 276 334 281 Q314 287 307 271Z" />
+              <ellipse class="eye-shine" cx="231" cy="247" rx="6.5" ry="5" transform="rotate(-28 231 247)" />
+              <ellipse class="eye-shine" cx="330" cy="256" rx="6.5" ry="5" transform="rotate(-28 330 256)" />
+              <circle class="eye-shine" cx="216" cy="265" r="2.6" /><circle class="eye-shine" cx="315" cy="274" r="2.6" />
             </g>
-            <g id="eyesClosed" style="display:none">
-              <path class="eye-line" d="M203 261 Q223 278 243 260 M300 270 Q320 287 340 269" />
-            </g>
-            <g id="eyesHappy" style="display:none"><path class="eye-line" d="M202 263 Q222 239 243 262 M299 271 Q319 247 340 270" /></g>
-            <g id="eyesTense" style="display:none"><path class="eye-line" d="M203 256 Q220 270 242 260 M300 265 Q319 279 339 269" /></g>
-            <path id="mouth" class="mouth" d="M251 297 Q258 310 267 300 L273 307 Q282 310 291 298 M273 307 Q269 319 265 310" />
-            <ellipse id="tongue" class="tongue" cx="273" cy="328" rx="9" ry="6" style="display:none" />
-            <path class="mouth-dot" d="M269 340 l5 1" />
+            <g id="eyesClosed" style="display:none"><path class="eye-line" d="M205 255 Q225 268 244 253 M305 265 Q325 278 345 263" /></g>
+            <g id="eyesHappy" style="display:none"><path class="eye-line" d="M205 260 Q225 237 244 259 M305 268 Q325 246 345 267" /></g>
+            <g id="eyesTense" style="display:none"><path class="eye-line" d="M205 253 Q225 270 244 256 M305 262 Q325 279 345 266" /></g>
+            <path id="mouth" class="mouth" d="M273 290 Q267 304 259 294 M273 290 Q280 304 291 292 M269 299 Q266 318 276 316 Q285 313 281 300" />
+            <ellipse id="tongue" class="tongue" cx="275" cy="327" rx="8" ry="5" style="display:none" />
+            <path class="mouth-dot" d="M271 333 l4 1" />
+            <circle class="cheek-hit" data-cheek="left" cx="175" cy="273" r="61" aria-hidden="true"><title>왼쪽 볼을 잡고 바깥쪽으로 당겨보세요</title></circle>
+            <circle class="cheek-hit" data-cheek="right" cx="362" cy="294" r="61" aria-hidden="true"><title>오른쪽 볼을 잡고 바깥쪽으로 당겨보세요</title></circle>
           </svg>
 
           <div class="tap-hint" id="tapHint">콕 누르거나 볼을 당겨보세요 👆</div>

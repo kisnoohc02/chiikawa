@@ -95,6 +95,8 @@ button:focus-visible { outline: 3px solid var(--blue-strong); outline-offset: 3p
 .brow,.eye,.mouth-dot { fill: #262321; }.eye-shine { fill: #fff; }
 .tongue { fill: #ed8fa9; }
 .eye-line,.mouth { fill: none; stroke: #262321; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.cheek-hit { fill: #fff; opacity: 0; pointer-events: all; cursor: grab; }
+.cheek-hit:active { cursor: grabbing; }
 .mascot-wrap.happy .mascot { animation: happyWiggle .4s ease; }
 @keyframes happyWiggle { 50% { transform: rotate(-5deg) translateY(-5px); } }
 .tap-hint { position: absolute; bottom: 58px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 7px 12px; border-radius: 14px; background: var(--surface); color: var(--blue-strong); box-shadow: var(--shadow); font-size: .8rem; font-weight: 800; animation: hintFloat 2s ease-in-out infinite; }
