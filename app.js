@@ -1,5 +1,4 @@
-/* 하치와레 놀이터 — 캐릭터 인터랙션 + 미니게임
-   저장: localStorage. 혼자 쓰는 개인용 정적 웹앱 (GitHub Pages). */
+/* 하치와레의 하루: 상태, 캐릭터 상호작용, 게임, JSON 백업 */
 (() => {
   "use strict";
 
@@ -49,26 +48,105 @@
   }
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch {} }
   const ITEMS = [
-    { id: "ribbon", name: "분홍 리본", icon: "🎀", category: "accessory" },
-    { id: "flower", name: "작은 꽃", icon: "🌼", category: "accessory" },
-    { id: "star", name: "반짝 별", icon: "⭐", category: "accessory" },
-    { id: "clover", name: "네잎클로버", icon: "🍀", category: "accessory" },
+    // 기존 ID는 저장된 아이템을 그대로 살리기 위해 유지한다.
+    { id: "ribbon", name: "분홍빛 리본", icon: "🎀", category: "accessory" },
+    { id: "flower", name: "들꽃 머리핀", icon: "🌼", category: "accessory" },
+    { id: "star", name: "별사탕 머리핀", icon: "⭐", category: "accessory" },
+    { id: "clover", name: "네잎클로버 핀", icon: "🍀", category: "accessory" },
+    { id: "skyRibbon", name: "하늘빛 리본", icon: "🎀", category: "accessory" },
+    { id: "peachBow", name: "복숭아 매듭", icon: "🎀", category: "accessory" },
+    { id: "bell", name: "조그만 방울", icon: "🔔", category: "accessory" },
+    { id: "dewFlower", name: "이슬꽃 핀", icon: "🌸", category: "accessory" },
+    { id: "leafPin", name: "새싹 잎핀", icon: "🍃", category: "accessory" },
+    { id: "sleepyCap", name: "낮잠 모자", icon: "🧢", category: "accessory" },
+    { id: "cloudPin", name: "솜구름 핀", icon: "☁️", category: "accessory" },
+    { id: "strawberryPin", name: "딸기 핀", icon: "🍓", category: "accessory" },
+    { id: "shellPin", name: "조개 핀", icon: "🐚", category: "accessory" },
+    { id: "acornCap", name: "도토리 모자", icon: "🌰", category: "accessory" },
+    { id: "warmScarf", name: "포근한 목도리", icon: "🧣", category: "accessory" },
+    { id: "snowflakePin", name: "첫눈 머리핀", icon: "❄️", category: "accessory" },
+
     { id: "picnic", name: "소풍 들판", icon: "🌿", category: "wallpaper" },
-    { id: "flowerfield", name: "꽃밭", icon: "🌷", category: "wallpaper" },
-    { id: "moonlit", name: "달빛 밤", icon: "🌙", category: "wallpaper" },
+    { id: "flowerfield", name: "작은 꽃밭", icon: "🌷", category: "wallpaper" },
+    { id: "moonlit", name: "달빛 산책길", icon: "🌙", category: "wallpaper" },
+    { id: "cloudhill", name: "솜구름 언덕", icon: "☁️", category: "wallpaper" },
+    { id: "cloverhill", name: "클로버 언덕", icon: "🍀", category: "wallpaper" },
+    { id: "seaside", name: "조개 바닷가", icon: "🐚", category: "wallpaper" },
+    { id: "rainywindow", name: "비 오는 창가", icon: "🌧️", category: "wallpaper" },
+    { id: "dawn", name: "새벽 산책", icon: "🌤️", category: "wallpaper" },
+    { id: "sunset", name: "노을빛 골목", icon: "🌅", category: "wallpaper" },
+    { id: "snowfield", name: "눈송이 마당", icon: "❄️", category: "wallpaper" },
+    { id: "candyhill", name: "별사탕 언덕", icon: "🍬", category: "wallpaper" },
+    { id: "stargarden", name: "밤의 별꽃밭", icon: "✨", category: "wallpaper" },
+    { id: "cozyroom", name: "포근한 방", icon: "🛏️", category: "wallpaper" },
+    { id: "peachgarden", name: "복숭아 정원", icon: "🍑", category: "wallpaper" },
+
     { id: "berry", name: "딸기빛 테마", icon: "🍓", category: "theme" },
-    { id: "forest", name: "숲빛 테마", icon: "🌳", category: "theme" },
+    { id: "forest", name: "풀잎빛 테마", icon: "🌿", category: "theme" },
     { id: "lavender", name: "저녁빛 테마", icon: "🪻", category: "theme" },
-    { id: "riceball", name: "주먹밥", icon: "🍙", category: "food", mood: 12 },
-    { id: "pancake", name: "팬케이크", icon: "🥞", category: "food", mood: 25 },
-    { id: "strawberry", name: "딸기", icon: "🍓", category: "food", mood: 40 },
+    { id: "cloud", name: "솜구름 테마", icon: "☁️", category: "theme" },
+    { id: "honey", name: "꿀과자 테마", icon: "🍯", category: "theme" },
+    { id: "seafoam", name: "바닷바람 테마", icon: "🫧", category: "theme" },
+    { id: "peach", name: "복숭아 테마", icon: "🍑", category: "theme" },
+    { id: "mint", name: "새싹 테마", icon: "🌱", category: "theme" },
+    { id: "nightstar", name: "별밤 테마", icon: "🌟", category: "theme" },
+    { id: "cocoa", name: "따뜻한 코코아 테마", icon: "☕", category: "theme" },
+
+    { id: "riceball", name: "소풍 주먹밥", icon: "🍙", category: "food", mood: 12 },
+    { id: "pancake", name: "몽글 팬케이크", icon: "🥞", category: "food", mood: 25 },
+    { id: "strawberry", name: "달콤 딸기", icon: "🍓", category: "food", mood: 40 },
+    { id: "dango", name: "꽃구경 경단", icon: "🍡", category: "food", mood: 18 },
+    { id: "sweetbun", name: "따끈 찐빵", icon: "🥟", category: "food", mood: 20 },
+    { id: "pudding", name: "말랑 푸딩", icon: "🍮", category: "food", mood: 28 },
+    { id: "soup", name: "포근한 수프", icon: "🥣", category: "food", mood: 32 },
+    { id: "biscuit", name: "별 모양 비스킷", icon: "🍪", category: "food", mood: 16 },
+    { id: "melon", name: "시원한 멜론", icon: "🍈", category: "food", mood: 30 },
+    { id: "peachSnack", name: "복숭아 조각", icon: "🍑", category: "food", mood: 34 },
+    { id: "marshmallow", name: "구름 마시멜로", icon: "🍥", category: "food", mood: 23 },
+    { id: "parfait", name: "별사탕 파르페", icon: "🍨", category: "food", mood: 45 },
+
     { id: "shell", name: "바다 조개", icon: "🐚", category: "item" },
-    { id: "acorn", name: "도토리", icon: "🌰", category: "item" },
+    { id: "acorn", name: "주머니 도토리", icon: "🌰", category: "item" },
+    { id: "seaglass", name: "파란 바다 유리", icon: "🫧", category: "item" },
+    { id: "smoothStone", name: "동글 조약돌", icon: "🪨", category: "item" },
+    { id: "leafLetter", name: "낙엽 편지", icon: "🍂", category: "item" },
+    { id: "starBottle", name: "별빛 유리병", icon: "🫙", category: "item" },
+    { id: "cloudNote", name: "구름 메모", icon: "📜", category: "item" },
+    { id: "tinyButton", name: "반짝 단추", icon: "🔘", category: "item" },
+    { id: "flowerSeed", name: "작은 꽃씨", icon: "🌱", category: "item" },
+    { id: "picnicTicket", name: "소풍 초대장", icon: "💌", category: "item" },
+    { id: "moonPebble", name: "달빛 조약돌", icon: "🌙", category: "item" },
   ];
   const SNACKS = [
-    { id: "riceball", price: 10 }, { id: "pancake", price: 20 }, { id: "strawberry", price: 35 },
+    { id: "riceball", price: 10 }, { id: "dango", price: 16 }, { id: "pancake", price: 20 },
+    { id: "soup", price: 26 }, { id: "strawberry", price: 35 }, { id: "parfait", price: 42 },
   ];
   function itemById(id) { return ITEMS.find(item => item.id === id); }
+  // 장착한 장신구는 OS 이모지가 아닌 작은 SVG 도형으로 그린다.
+  const bowArt = color => `<path d="M-5 -3 Q-22 -23 -29 -13 Q-34 -1 -9 4Z M5 -3 Q22 -23 29 -13 Q34 -1 9 4Z" fill="${color}" stroke="#45515a" stroke-width="2.5"/><ellipse cx="0" cy="0" rx="7" ry="6" fill="#fff3dd" stroke="#45515a" stroke-width="2"/>`;
+  const flowerArt = (petal,center) => `<g fill="${petal}" stroke="#596570" stroke-width="1.7">${[0,72,144,216,288].map(a=>`<ellipse cx="0" cy="-11" rx="8" ry="13" transform="rotate(${a})"/>`).join("")}</g><circle r="7" fill="${center}" stroke="#596570" stroke-width="2"/>`;
+  const starArt = color => `<path d="M0 -27 L7 -8 27 -8 11 4 17 24 0 12 -17 24 -11 4 -27 -8 -7 -8Z" fill="${color}" stroke="#596570" stroke-width="2.5" stroke-linejoin="round"/>`;
+  const leafArt = color => `<path d="M-20 9 Q-14 -21 20 -18 Q17 13 -13 17Z" fill="${color}" stroke="#53665b" stroke-width="2.5"/><path d="M-16 14 Q-3 -2 17 -15" fill="none" stroke="#6b9a76" stroke-width="2"/>`;
+  const ACCESSORY_ART = {
+    ribbon:{x:284,y:111,svg:bowArt("#f3b8cb")},
+    flower:{x:218,y:142,svg:flowerArt("#fff5e0","#f1cd78")},
+    star:{x:340,y:150,svg:starArt("#f7d477")},
+    clover:{x:217,y:149,svg:`<g fill="#90c69b" stroke="#53846f" stroke-width="2"><circle cx="-8" cy="-8" r="9"/><circle cx="8" cy="-8" r="9"/><circle cx="-8" cy="8" r="9"/><circle cx="8" cy="8" r="9"/></g><path d="M0 11 Q7 24 14 27" fill="none" stroke="#53846f" stroke-width="3"/>`},
+    skyRibbon:{x:284,y:111,svg:bowArt("#a8d6e9")},
+    peachBow:{x:284,y:111,svg:bowArt("#f7c9b7")},
+    bell:{x:284,y:109,svg:`<path d="M-19 8 Q-17 -16 0 -19 Q17 -16 19 8Z" fill="#f8df91" stroke="#665b5e" stroke-width="2.5"/><path d="M-21 10 Q0 17 21 10" fill="none" stroke="#665b5e" stroke-width="3"/><circle cy="17" r="5" fill="#e9a3a9" stroke="#665b5e" stroke-width="2"/>`},
+    dewFlower:{x:345,y:155,svg:flowerArt("#f4c7da","#f9e9a8")},
+    leafPin:{x:215,y:145,svg:leafArt("#acd5a8")},
+    sleepyCap:{x:284,y:104,svg:`<path d="M-35 4 Q-28 -30 12 -31 Q30 -24 33 6Z" fill="#b4cfe2" stroke="#566473" stroke-width="3"/><path d="M-35 6 Q0 1 35 6" fill="none" stroke="#fff8eb" stroke-width="8" stroke-linecap="round"/><circle cx="15" cy="-30" r="7" fill="#fff8eb"/>`},
+    cloudPin:{x:345,y:152,svg:`<path d="M-23 8 Q-29 -3 -17 -9 Q-12 -22 1 -17 Q13 -20 17 -8 Q29 -7 27 6 Q24 15 11 15 H-13 Q-24 15 -23 8Z" fill="#f8fcf9" stroke="#819ca8" stroke-width="2.5"/>`},
+    strawberryPin:{x:215,y:152,svg:`<path d="M-17 -7 Q-20 11 0 23 Q20 11 17 -7 Q0 -18 -17 -7Z" fill="#e99aab" stroke="#7c5d61" stroke-width="2.5"/><path d="M-18 -10 Q-10 -17 0 -11 Q9 -17 18 -10 Q3 -4 0 0 Q-3 -4 -18 -10Z" fill="#8abf94"/><g fill="#fff4d2"><circle cx="-7" cy="3" r="2"/><circle cx="8" cy="6" r="2"/><circle cx="0" cy="15" r="2"/></g>`},
+    shellPin:{x:346,y:161,svg:`<path d="M-24 12 Q-22 -16 0 -22 Q22 -16 24 12 Q0 22 -24 12Z" fill="#f4dace" stroke="#876e79" stroke-width="2.5"/><path d="M0 -20 V16 M0 -18 Q-10 -5 -17 14 M0 -18 Q10 -5 17 14" fill="none" stroke="#c5909e" stroke-width="2"/>`},
+    acornCap:{x:284,y:107,svg:`<path d="M-25 -1 Q-21 -27 0 -29 Q21 -27 25 -1 Q17 13 0 17 Q-17 13 -25 -1Z" fill="#bda887" stroke="#625a54" stroke-width="2.5"/><path d="M-27 -3 Q-22 -21 0 -22 Q22 -21 27 -3Z" fill="#849c80" stroke="#625a54" stroke-width="2.5"/><path d="M0 -22 v-10" stroke="#625a54" stroke-width="3" stroke-linecap="round"/>`},
+    warmScarf:{x:282,y:362,svg:`<path d="M-53 -5 Q0 13 52 -5 L51 14 Q0 32 -51 15Z" fill="#e8adbf" stroke="#806876" stroke-width="3"/><path d="M25 13 L46 49 Q54 55 58 46 L54 9Z" fill="#e8adbf" stroke="#806876" stroke-width="3"/><path d="M39 40 l8 8 M47 36 l8 8" stroke="#fff7ea" stroke-width="3"/>`},
+    snowflakePin:{x:345,y:152,svg:`<g fill="none" stroke="#a6cfdd" stroke-width="4" stroke-linecap="round"><path d="M0 -26 V26 M-23 -13 L23 13 M-23 13 L23 -13"/><path d="M-6 -19 L0 -13 6 -19 M-6 19 L0 13 6 19" stroke-width="2"/></g><circle r="4" fill="#fff"/>`},
+  };
+  const itemIconMarkup = item => item.category === "accessory" && ACCESSORY_ART[item.id]
+    ? `<svg class="item-art" viewBox="-40 -40 80 80" aria-hidden="true">${ACCESSORY_ART[item.id].svg}</svg>` : item.icon;
   let noticeTimer = null;
   function notice(message) {
     const box = $("#notice");
@@ -108,6 +186,7 @@
   /* ---------- 놀아주기 / 게임 / 게임 선택 ---------- */
   let boardGames = null;
   let runner = null;
+  document.body.dataset.currentView = "play";
   function showView(view) {
     const previous = $(".view.is-active")?.id.slice(5);
     if (previous === "catch" && view !== "catch") stopCatch();
@@ -116,6 +195,7 @@
     if (previous === "starlane" && view !== previous) runner?.leave();
     if (view === "memory" && previous !== "memory" && memFinished) buildMemory();
     $$(".view").forEach(v => v.classList.toggle("is-active", v.id === "view-" + view));
+    document.body.dataset.currentView = view;
     $$(".tab").forEach(tab => {
       const active = tab.dataset.view === (view === "play" ? "play" : view === "items" ? "items" : "games");
       tab.classList.toggle("is-active", active);
@@ -124,6 +204,7 @@
     });
     if (["omok", "chess"].includes(view) && previous !== view) boardGames?.enter(view);
     if (view === "starlane" && previous !== view) runner?.enter();
+    if (view === "play") renderMood();
     window.scrollTo({ top: 0, behavior: "instant" });
   }
   $$(".tab").forEach(tab => tab.addEventListener("click", () => showView(tab.dataset.view)));
@@ -162,7 +243,7 @@
   const eyeGroups = { open: $("#eyes"), closed: $("#eyesClosed"), happy: $("#eyesHappy"), tense: $("#eyesTense") };
   const cheekLeft = $("#cheekLeft"), cheekRight = $("#cheekRight");
   const moodFill = $("#moodFill"), moodText = $("#moodText"), moodEmoji = $("#moodEmoji");
-  const totalPokes = $("#totalPokes"), tapHint = $("#tapHint");
+  const tapHint = $("#tapHint");
   const BODY_BASE = bodyShape.getAttribute("d");
   const MOUTH = {
     smile: "M273 290 Q267 304 259 294 M273 290 Q280 304 291 292 M269 299 Q266 318 276 316 Q285 313 281 300",
@@ -186,7 +267,6 @@
     const m = Math.max(0, Math.min(100, state.mood));
     moodFill.style.width = m + "%";
     $("#moodBar").setAttribute("aria-valuenow", m);
-    totalPokes.textContent = state.pokes;
     if (m >= 75) { moodEmoji.textContent = "🥰"; moodText.textContent = "완전 행복해!"; }
     else if (m >= 45) { moodEmoji.textContent = "😊"; moodText.textContent = "기분 좋아!"; }
     else if (m >= 20) { moodEmoji.textContent = "😐"; moodText.textContent = "조금 심심해…"; }
@@ -220,7 +300,9 @@
     setEyes("closed");
     setTimeout(() => { if (!drag && reactionTimer === null && eyeMode === "closed") setEyes("open"); }, 140);
   }
-  setInterval(() => { if (Math.random() < .5) blink(); }, 2600);
+  setInterval(() => {
+    if (!document.hidden && document.body.dataset.currentView === "play" && Math.random() < .5) blink();
+  }, 2600);
 
   function pokeAt(x, y) {
     state.pokes++;
@@ -312,7 +394,10 @@
       e.preventDefault(); const r = wrap.getBoundingClientRect(); pokeAt(r.left + r.width / 2, r.top + r.height / 2);
     }
   });
-  setInterval(() => { state.mood = Math.max(0, state.mood - 1); renderMood(); save(); }, 9000);
+  setInterval(() => {
+    if (document.hidden || state.mood <= 0) return;
+    state.mood--; if (document.body.dataset.currentView === "play") renderMood(); save();
+  }, 9000);
 
   function feed(item) {
     state.mood = Math.min(100, state.mood + item.mood);
@@ -323,34 +408,47 @@
   }
   function applyEquipment() {
     const accessory = itemById(state.equipped.accessory);
-    const sprite = $("#accessorySprite");
-    sprite.textContent = accessory?.icon || "";
-    sprite.style.display = accessory ? "" : "none";
+    const art = $("#accessoryArt"), drawing = accessory && ACCESSORY_ART[accessory.id];
+    art.innerHTML = drawing?.svg || "";
+    art.setAttribute("transform", drawing ? `translate(${drawing.x} ${drawing.y})` : "");
+    art.style.display = drawing ? "" : "none";
     $(".mascot-stage").dataset.wallpaper = state.equipped.wallpaper || "default";
     document.documentElement.dataset.worldTheme = state.equipped.theme || "default";
   }
+  let showOwnedOnly = false;
   function renderInventory() {
+    const openGroups = new Set($$("#inventoryGrid details[open]").map(el => el.dataset.category));
+    const firstRender = !$("#inventoryGrid details");
+    const discovered = ITEMS.filter(item => Number(state.owned[item.id]) > 0).length;
+    $("#discoveredCount").textContent = discovered;
+    $("#catalogCount").textContent = ITEMS.length;
+    $("#inventoryFilter").textContent = showOwnedOnly ? "전체 도감 보기" : "보유한 아이템만 보기";
+    $("#inventoryFilter").setAttribute("aria-pressed", String(showOwnedOnly));
     const groups = [
       ["accessory", "장신구", "하치와레에게 직접 달아줘요"],
-      ["wallpaper", "배경", "놀이터의 풍경을 바꿔요"],
+      ["wallpaper", "배경", "하치와레 뒤의 풍경을 바꿔요"],
       ["theme", "색 테마", "화면 전체의 색감을 바꿔요"],
       ["food", "간식", "뽑기로 받은 간식을 꺼내줘요"],
       ["item", "소장품", "모험의 작은 기념품이에요"],
     ];
     $("#inventoryGrid").innerHTML = groups.map(([category, label, desc]) => {
-      const owned = ITEMS.filter(item => item.category === category && Number(state.owned[item.id]) > 0);
-      const cards = owned.map(item => {
+      const all = ITEMS.filter(item => item.category === category);
+      const ownedCount = all.filter(item => Number(state.owned[item.id]) > 0).length;
+      const visible = showOwnedOnly ? all.filter(item => Number(state.owned[item.id]) > 0) : all;
+      const cards = visible.map(item => {
         const count = Math.max(0, Math.floor(Number(state.owned[item.id]) || 0));
+        if (!count) return `<div class="inventory-item locked"><span class="item-icon" aria-hidden="true">${itemIconMarkup(item)}</span><div><strong>${item.name}</strong><small>아직 발견하지 못했어요</small></div></div>`;
         const equipped = state.equipped[category] === item.id;
         const action = category === "food" ? `<button class="mini-action" data-use="${item.id}">먹이기</button>`
           : category === "item" ? "" : `<button class="mini-action" data-equip="${item.id}" ${equipped ? "disabled" : ""}>${equipped ? "장착 중" : "장착"}</button>`;
-        return `<div class="inventory-item"><span class="item-icon">${item.icon}</span><div><strong>${item.name}</strong><small>${category === "food" ? `기분 +${item.mood} · ` : ""}보유 ${count}개</small></div>${action}</div>`;
+        return `<div class="inventory-item"><span class="item-icon">${itemIconMarkup(item)}</span><div><strong>${item.name}</strong><small>${category === "food" ? `기분 +${item.mood} · ` : ""}보유 ${count}개</small></div>${action}</div>`;
       }).join("");
       const reset = ["accessory", "wallpaper", "theme"].includes(category) && state.equipped[category]
         ? `<button class="text-link" data-unequip="${category}">기본으로 되돌리기</button>` : "";
-      return `<section class="inventory-section"><div class="inventory-heading"><h3>${label}</h3><p>${desc}</p></div>${cards || '<p class="empty-note">아직 없어요. 랜덤 선물을 뽑아보세요.</p>'}${reset}</section>`;
+      return `<details class="inventory-section" data-category="${category}" ${(firstRender && category === "accessory") || openGroups.has(category) ? "open" : ""}><summary class="inventory-heading"><h3>${label}</h3><span>${ownedCount}/${all.length}</span></summary><p class="inventory-desc">${desc}</p>${cards || '<p class="empty-note">아직 없어요. 랜덤 선물을 뽑아보세요.</p>'}${reset}</details>`;
     }).join("");
   }
+  $("#inventoryFilter").addEventListener("click", () => { showOwnedOnly = !showOwnedOnly; renderInventory(); });
   $("#inventoryGrid").addEventListener("click", e => {
     const equip = e.target.closest("[data-equip]");
     const unequip = e.target.closest("[data-unequip]");
@@ -385,7 +483,10 @@
   });
   $("#btnSpin").addEventListener("click", () => {
     if (!spend(50)) return;
-    const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+    const unseen = ITEMS.filter(entry => !state.owned[entry.id]);
+    const pool = unseen.length && Math.random() < .65 ? unseen : ITEMS;
+    const item = pool[Math.floor(Math.random() * pool.length)];
+    const firstFind = !state.owned[item.id];
     state.owned[item.id] = Math.max(0, Math.floor(Number(state.owned[item.id]) || 0)) + 1;
     const r = wrap.getBoundingClientRect();
     react("open", "surprise", "bounce", 1500);
@@ -394,10 +495,103 @@
     setTimeout(() => {
       setFace("happy", "happy");
       floatFx(item.icon, r.left + r.width / 2, r.top + r.height * .2);
-      notice(`${item.icon} ${item.name} 획득! 아이템 칸에서 확인하세요.`);
+      notice(`${item.icon} ${firstFind ? "새 발견! " : ""}${item.name} 획득! 아이템 칸에서 확인하세요.`);
     }, 350);
   });
   applyEquipment(); renderWallet(); renderInventory();
+
+  /* JSON 백업: 알려진 필드만 복원하여 오래된/손상된 파일을 안전하게 거른다. */
+  const BACKUP_FORMAT = "hachiware-day-save";
+  const BACKUP_VERSION = 1;
+  const isObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
+  const safeInt = (value, max, fallback = 0) => typeof value === "number" && Number.isFinite(value)
+    ? Math.min(max, Math.max(0, Math.floor(value))) : fallback;
+  const safeOptionalInt = (value, max) => value == null ? null : safeInt(value, max, null);
+  function cleanSave(raw) {
+    if (!isObject(raw)) throw new Error("세이브 데이터 형식이 올바르지 않아요.");
+    const owned = {};
+    for (const item of ITEMS) {
+      const count = safeInt(raw.owned?.[item.id], 1000000);
+      if (count) owned[item.id] = count;
+    }
+    const equipped = { accessory: null, wallpaper: null, theme: null };
+    for (const category of Object.keys(equipped)) {
+      const id = raw.equipped?.[category];
+      if (typeof id === "string" && owned[id] && itemById(id)?.category === category) equipped[category] = id;
+    }
+    const records = emptyRecord();
+    for (const level of levelKeys) {
+      const catchRecord = raw.records?.catch?.[level];
+      const memoryRecord = raw.records?.memory?.[level];
+      records.catch[level] = { best: safeInt(catchRecord?.best, 1000000), clears: safeInt(catchRecord?.clears, 1000000) };
+      records.memory[level] = { bestMoves: safeOptionalInt(memoryRecord?.bestMoves, 1000000),
+        bestTime: safeOptionalInt(memoryRecord?.bestTime, 1000000), clears: safeInt(memoryRecord?.clears, 1000000) };
+    }
+    const boardRecords = { omok: {}, chess: {} };
+    for (const game of ["omok", "chess"]) for (let n = 1; n <= 10; n++) {
+      const old = raw.boardRecords?.[game]?.[n];
+      if (!isObject(old)) continue;
+      boardRecords[game][n] = { wins: safeInt(old.wins, 1000000), losses: safeInt(old.losses, 1000000),
+        draws: safeInt(old.draws, 1000000), bestTime: safeOptionalInt(old.bestTime, 10000000),
+        streak: safeInt(old.streak, 1000000), bestStreak: safeInt(old.bestStreak, 1000000) };
+    }
+    const run = raw.starlane || {};
+    return { pokes: safeInt(raw.pokes, 1000000000), mood: safeInt(raw.mood, 100, 70),
+      sound: typeof raw.sound === "boolean" ? raw.sound : true,
+      coins: safeInt(raw.coins, 1000000000), owned, equipped, records, boardRecords,
+      starlane: { best: safeInt(run.best, 1000000000), runs: safeInt(run.runs, 1000000000),
+        totalScore: safeInt(run.totalScore, 1000000000), totalCoins: safeInt(run.totalCoins, 1000000000),
+        bestStars: safeInt(run.bestStars, 1000000000) } };
+  }
+  const saveFile = $("#saveFile"), importButton = $("#importSave"), importStatus = $("#importStatus");
+  let pendingImport = null, importSelection = 0;
+  $("#exportSave").addEventListener("click", () => {
+    try {
+      const backup = { format: BACKUP_FORMAT, version: BACKUP_VERSION,
+        exportedAt: new Date().toISOString(), theme: darkMode ? "dark" : "light", data: cleanSave(state) };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob), link = document.createElement("a");
+      const today = new Date();
+      const date = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
+      link.href = url; link.download = `하치와레의-하루-${date}.json`;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      importStatus.textContent = "JSON 파일을 저장했어요.";
+    } catch { importStatus.textContent = "파일을 만들지 못했어요. 다시 시도해 주세요."; }
+  });
+  saveFile.addEventListener("change", async () => {
+    const selection = ++importSelection, file = saveFile.files?.[0];
+    pendingImport = null; importButton.disabled = true;
+    if (!file) { importStatus.textContent = ""; return; }
+    if (file.size > 2 * 1024 * 1024) { importStatus.textContent = "2MB 이하의 JSON 파일을 선택해 주세요."; return; }
+    try {
+      const backup = JSON.parse(await file.text());
+      if (selection !== importSelection) return;
+      if (!isObject(backup) || backup.format !== BACKUP_FORMAT || backup.version !== BACKUP_VERSION ||
+          !isObject(backup.data) || !["dark", "light"].includes(backup.theme)) {
+        throw new Error("하치와레의 하루 세이브 파일이 아니거나 버전이 맞지 않아요.");
+      }
+      pendingImport = { state: cleanSave(backup.data), theme: backup.theme };
+      const kinds = Object.keys(pendingImport.state.owned).length;
+      importStatus.textContent = `불러올 데이터: 동전 ${pendingImport.state.coins}개 · 아이템 ${kinds}종. 적용하면 현재 데이터가 바뀝니다.`;
+      importButton.disabled = false;
+    } catch (error) { if (selection === importSelection) importStatus.textContent = error.message || "JSON 파일을 읽지 못했어요."; }
+  });
+  importButton.addEventListener("click", () => {
+    if (!pendingImport) return;
+    try {
+      const oldSave = localStorage.getItem(SAVE_KEY), oldTheme = localStorage.getItem(THEME_KEY);
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(pendingImport.state));
+        localStorage.setItem(THEME_KEY, pendingImport.theme);
+      } catch (error) {
+        if (oldSave === null) localStorage.removeItem(SAVE_KEY); else localStorage.setItem(SAVE_KEY, oldSave);
+        if (oldTheme === null) localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, oldTheme);
+        throw error;
+      }
+      location.reload();
+    } catch { importStatus.textContent = "저장 공간에 접근할 수 없어 불러오지 못했어요."; }
+  });
 
   /* 사운드 토글 */
   const soundBtn = $("#soundToggle");
@@ -429,7 +623,10 @@
   }
 
   /* ================= 미니게임 1: 하치와레 잡기 ================= */
+  let mascotMarkup = "", mascotMarkupKey = null;
   function gameMascotSvg() {
+    const key = state.equipped.accessory || "default";
+    if (mascotMarkupKey === key) return mascotMarkup;
     const clone = $("#mascot").cloneNode(true);
     clone.removeAttribute("id");
     clone.setAttribute("viewBox", "105 80 350 420");
@@ -439,12 +636,14 @@
     clone.querySelectorAll("#eyesClosed, #eyesHappy, #eyesTense, #tongue").forEach(el => el.remove());
     clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
     clone.style.transform = "";
-    return clone.outerHTML;
+    mascotMarkupKey = key;
+    return mascotMarkup = clone.outerHTML;
   }
   const BOMB_SVG = `<svg viewBox="0 0 100 110" aria-label="폭탄"><circle cx="50" cy="64" r="30" fill="#3a3a44"/><rect x="46" y="26" width="8" height="12" rx="3" fill="#555"/><path d="M54 26 Q64 16 68 24" fill="none" stroke="#e08a2e" stroke-width="3" stroke-linecap="round"/><circle cx="69" cy="22" r="4" fill="#ffcf4d"/><circle cx="40" cy="60" r="4" fill="#fff" opacity=".5"/></svg>`;
   const holeGrid = $("#holeGrid"), catchScoreEl = $("#catchScore"), catchTimeEl = $("#catchTime");
   const catchBestEl = $("#catchBest"), catchStartBtn = $("#catchStart");
   let catchScore = 0, catchTime = 30, catchTimer = null, popTimer = null, catchRunning = false, catchRound = 0;
+  let catchPaused = false;
   function renderCatchInfo() {
     const level = LEVELS[catchLevel], record = state.records.catch[catchLevel];
     $("#catchGoal").textContent = `30초 안에 ${level.catch.target}점 이상 · 폭탄 −3점 · 클리어 🪙${rewardFor(level.n, 30)}`;
@@ -477,13 +676,10 @@
     pop.classList.remove("bonk"); hole.classList.add("up");
     setTimeout(() => { if (round === catchRound) hole.classList.remove("up"); }, LEVELS[catchLevel].catch.stay);
   }
-  function startCatch() {
-    if (catchRunning) return;
-    catchRunning = true; catchRound++; catchScore = 0; catchTime = 30;
-    catchScoreEl.textContent = 0; catchTimeEl.textContent = 30;
-    catchStartBtn.textContent = "진행 중…"; catchStartBtn.disabled = true;
-    $$("#catchDifficulty button").forEach(b => b.disabled = true);
-    const round = catchRound;
+  function runCatch() {
+    if (!catchRunning) return;
+    if (document.hidden) { catchPaused = true; return; }
+    catchPaused = false; const round = ++catchRound;
     catchTimer = setInterval(() => {
       catchTime--; catchTimeEl.textContent = catchTime;
       if (catchTime <= 0) endCatch();
@@ -496,8 +692,16 @@
     };
     loop();
   }
+  function startCatch() {
+    if (catchRunning) return;
+    catchRunning = true; catchScore = 0; catchTime = 30;
+    catchScoreEl.textContent = 0; catchTimeEl.textContent = 30;
+    catchStartBtn.textContent = "진행 중…"; catchStartBtn.disabled = true;
+    $$("#catchDifficulty button").forEach(b => b.disabled = true);
+    runCatch();
+  }
   function cleanCatch() {
-    catchRunning = false; catchRound++;
+    catchRunning = false; catchPaused = false; catchRound++;
     clearInterval(catchTimer); clearTimeout(popTimer);
     $$(".hole", holeGrid).forEach(h => h.classList.remove("up"));
     $$("#catchDifficulty button").forEach(b => b.disabled = false);
@@ -533,7 +737,7 @@
   }
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   function buildMemory() {
-    memRound++; clearInterval(memTimer);
+    memRound++; clearInterval(memTimer); memTimer = null;
     memMoves = 0; memFlipped = []; memMatched = 0; memTime = 0;
     memLock = false; memStarted = false; memFinished = false;
     memMovesEl.textContent = 0; memTimeEl.textContent = 0;
@@ -550,14 +754,18 @@
       cardGrid.appendChild(card);
     });
   }
-  function startMemTimer() {
-    if (memStarted) return;
-    memStarted = true;
-    $$("#memDifficulty button").forEach(b => b.disabled = true);
+  function runMemClock() {
+    if (document.hidden || memTimer || !memStarted || memFinished) return;
     memTimer = setInterval(() => {
       memTime++; memTimeEl.textContent = memTime;
       if (memTime >= LEVELS[memLevel].memory.seconds) endMemory(false, "시간 초과!");
     }, 1000);
+  }
+  function startMemTimer() {
+    if (memStarted) return;
+    memStarted = true;
+    $$("#memDifficulty button").forEach(b => b.disabled = true);
+    runMemClock();
   }
   function flipCard(card) {
     if (memLock || memFinished || card.classList.contains("flipped") || card.classList.contains("matched")) return;
@@ -587,7 +795,7 @@
   }
   function endMemory(won, reason) {
     if (memFinished) return;
-    memFinished = true; memLock = true; clearInterval(memTimer);
+    memFinished = true; memLock = true; clearInterval(memTimer); memTimer = null;
     $$("#memDifficulty button").forEach(b => b.disabled = false);
     if (won) {
       const record = state.records.memory[memLevel];
@@ -602,11 +810,23 @@
   }
   function stopMemory() {
     if (!memStarted || memFinished) return;
-    memRound++; clearInterval(memTimer); memFinished = true; memLock = true;
+    memRound++; clearInterval(memTimer); memTimer = null; memFinished = true; memLock = true;
     $$("#memDifficulty button").forEach(b => b.disabled = false);
     notice("카드 게임을 중단했어요.");
   }
   $("#memReset").addEventListener("click", buildMemory);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      if (catchRunning) {
+        catchPaused = true; catchRound++; clearInterval(catchTimer); clearTimeout(popTimer);
+        $$(".hole", holeGrid).forEach(h => h.classList.remove("up"));
+      }
+      clearInterval(memTimer); memTimer = null;
+    } else {
+      if (catchRunning && catchPaused) runCatch();
+      runMemClock();
+    }
+  });
   buildMemory(); renderDifficulty("memory"); renderGameSummaries();
   boardGames = window.HachiBoardGames?.init({ state, save, earn, notice, sndWin, sndBad, sndPoke, rewardFor, showView });
   runner = window.HachiStarlane?.init({ state, save, earn, notice, sndPoke, sndBad, sndWin });

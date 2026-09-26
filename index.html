@@ -2,21 +2,21 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#c8eff6" />
   <meta name="color-scheme" content="light dark" />
-  <title>하치와레 🐱 놀이터</title>
-  <meta name="description" content="하치와레를 쓰다듬고 볼을 콕콕! 미니게임도 즐기는 귀여운 놀이터" />
+  <title>하치와레의 하루</title>
+  <meta name="description" content="하치와레와 놀고 게임을 즐겨요." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=15" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 </head>
 <body>
   <div class="sky" aria-hidden="true"><span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span></div>
   <header class="app-header">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"><img src="favicon.svg" alt="" /></span><div><span class="eyebrow">LITTLE MOMENTS</span><h1 class="logo">하치와레의 하루</h1></div></div>
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><img src="favicon.svg" alt="" /></span><h1 class="logo">하치와레의 하루</h1></div>
     <div class="header-actions">
       <span class="wallet" aria-label="보유 재화"><span aria-hidden="true">🪙</span> <b id="coinBalance">30</b></span>
       <button id="soundToggle" class="icon-btn" aria-label="소리 끄기" title="소리 끄기">🔔</button>
@@ -29,9 +29,8 @@
     <button class="tab" data-view="items"><span class="tab-ico">▦</span><span class="tab-txt">아이템</span></button>
   </nav>
   <main class="app-main">
-    <!-- ========== 놀아주기 (마스코트) ========== -->
-    <section id="view-play" class="view is-active" aria-label="하치와레 놀이터">
-      <div class="section-intro"><span class="eyebrow">TODAY WITH HACHIWARE</span><h2>오늘도 함께 놀자!</h2><p>콕 누르거나 볼을 잡고 살짝 당겨보세요.</p></div>
+    <section id="view-play" class="view is-active" aria-label="하치와레와 놀기">
+      <div class="section-intro"><h2>하치와레와 놀기</h2></div>
       <div class="mascot-stage">
         <svg class="scene-sun" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="17"/><path d="M32 3v8 M32 53v8 M3 32h8 M53 32h8 M11.5 11.5l6 6 M46.5 46.5l6 6 M52.5 11.5l-6 6 M17.5 46.5l-6 6"/></svg>
         <svg class="scene-sprout sprout-left" viewBox="0 0 60 70" aria-hidden="true"><path class="sprout-stem" d="M30 68V36"/><path class="sprout-leaf" d="M29 60Q15 42 7 49Q11 63 29 60ZM31 52Q48 35 54 43Q50 57 31 52Z"/><g class="sprout-flower"><ellipse cx="30" cy="16" rx="7" ry="12"/><ellipse cx="30" cy="16" rx="7" ry="12" transform="rotate(72 30 24)"/><ellipse cx="30" cy="16" rx="7" ry="12" transform="rotate(144 30 24)"/><ellipse cx="30" cy="16" rx="7" ry="12" transform="rotate(216 30 24)"/><ellipse cx="30" cy="16" rx="7" ry="12" transform="rotate(288 30 24)"/></g><circle class="sprout-center" cx="30" cy="24" r="6"/></svg>
@@ -40,9 +39,7 @@
         <div class="mood-bar" role="progressbar" aria-label="하치와레 기분" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70" id="moodBar"><div class="mood-bar__fill" id="moodFill"></div></div>
 
         <div class="mascot-wrap" id="mascotWrap" role="button" tabindex="0" aria-label="하치와레를 누르거나 양 볼을 바깥으로 당겨보세요">
-          <!-- 하치와레 SVG: 눈 깜빡임과 입 모양은 JS로 제어 -->
           <svg id="mascot" class="mascot" viewBox="0 0 568 564" role="img" aria-label="하치와레 캐릭터">
-            <!-- 첨부된 원본 그림의 비율과 손그림 선을 따라 그린 일러스트 -->
             <path class="tail" d="M368 426 Q386 430 398 412 Q413 395 426 404 Q441 414 431 427 Q416 443 387 441 Q375 437 368 426Z" />
             <path id="bodyShape" class="body" d="M179 165 Q152 177 136 208 Q115 246 119 284 Q119 316 148 334 Q132 328 130 341 Q130 356 158 364 Q164 363 168 375 Q171 412 198 433 Q183 441 182 455 Q183 469 198 468 Q211 466 220 449 Q254 464 297 461 Q303 469 305 480 Q308 494 319 486 Q329 477 328 456 Q366 442 383 414 Q392 398 393 376 Q394 366 383 356 Q378 344 387 332 Q396 322 404 331 Q413 343 414 357 Q429 339 433 333 Q451 301 444 266 Q439 229 413 202 Q393 184 364 179 Q324 163 286 171 Q244 163 215 172 Q192 158 179 165 Z" />
             <path class="blue-patch" d="M195 144 Q207 113 224 96 Q232 87 241 92 Q262 102 276 136 Q304 134 326 145 Q355 122 374 115 Q390 109 400 126 Q411 149 415 180 Q416 196 410 204 Q398 219 372 211 Q319 202 286 173 Q268 192 229 191 Q195 191 177 174 Q179 160 195 144 Z" />
@@ -64,25 +61,24 @@
             <path id="mouth" class="mouth" d="M273 290 Q267 304 259 294 M273 290 Q280 304 291 292 M269 299 Q266 318 276 316 Q285 313 281 300" />
             <ellipse id="tongue" class="tongue" cx="275" cy="327" rx="8" ry="5" style="display:none" />
             <path class="mouth-dot" d="M271 333 l4 1" />
-            <text id="accessorySprite" class="accessory-sprite" x="284" y="112" text-anchor="middle" style="display:none"></text>
+            <g id="accessoryArt" class="accessory-art" style="display:none"></g>
           </svg>
 
-          <div class="tap-hint" id="tapHint">콕 누르거나 볼을 당겨보세요 👆</div>
+          <div class="tap-hint" id="tapHint">누르거나 볼을 당겨보세요</div>
         </div>
 
         <div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
 
       </div>
-      <div class="action-panel"><div class="panel-heading"><span class="eyebrow">LITTLE TREATS</span><h3>간식과 선물</h3><p>게임에서 모은 동전으로 하치와레에게 선물해요.</p></div>
+      <div class="action-panel"><div class="panel-heading"><h3>간식과 선물</h3></div>
         <div id="snackShop" class="snack-shop"></div>
         <button class="gacha-btn" id="btnSpin"><span>🎁 랜덤 선물 뽑기</span><strong>🪙 50</strong></button>
         <button class="text-link" data-view-link="items">보유 아이템 보기 →</button>
-        <p class="stat-line">함께한 콕콕 <b id="totalPokes">0</b>번 <span aria-hidden="true">·</span> 오늘도 하치와레와 함께 💙</p>
       </div>
     </section>
 
     <section id="view-games" class="view" aria-label="게임 선택">
-      <div class="section-intro"><span class="eyebrow">MINI GAMES</span><h2>오늘은 어떤 놀이?</h2><p>마음에 드는 게임을 골라 시작해요.</p></div>
+      <div class="section-intro"><h2>게임</h2></div>
       <div class="game-picker">
         <button class="game-tile" data-open-game="catch"><span class="tile-illustration tile-catch" aria-hidden="true">🐱<span>✦</span></span><span class="tile-copy"><span class="tile-label">30초 챌린지</span><strong>하치와레 잡기</strong><small>톡톡! 폭탄은 피해요</small><small id="catchSummary">총 클리어 0회</small></span><span class="tile-arrow" aria-hidden="true">↗</span></button>
         <button class="game-tile" data-open-game="memory"><span class="tile-illustration tile-memory" aria-hidden="true">🃏<span>♡</span></span><span class="tile-copy"><span class="tile-label">기억력 놀이</span><strong>카드 짝맞추기</strong><small>같은 그림 두 장을 찾아요</small><small id="memSummary">총 클리어 0회</small></span><span class="tile-arrow" aria-hidden="true">↗</span></button>
@@ -92,11 +88,12 @@
       </div>
     </section>
     <section id="view-items" class="view" aria-label="아이템">
-      <div class="section-intro"><span class="eyebrow">MY LITTLE COLLECTION</span><h2>하치와레의 보관함</h2><p>장신구·배경·색 테마를 장착하고 간식을 꺼내 주세요.</p></div>
-      <div class="inventory-summary"><span>🪙 보유 동전 <b id="inventoryCoins">30</b></span><span>🎁 뽑기 1회 50동전</span></div>
+      <div class="section-intro"><h2>아이템</h2></div>
+      <div class="inventory-summary"><span>🪙 보유 동전 <b id="inventoryCoins">30</b></span><span>✦ 모은 종류 <b id="discoveredCount">0</b>/<b id="catalogCount">63</b></span></div>
+      <details class="data-panel" id="dataPanel"><summary>데이터 관리</summary><div class="data-panel-body"><button id="exportSave" class="pill-btn" type="button">JSON 내보내기</button><label for="saveFile">JSON 파일 선택</label><input id="saveFile" type="file" accept=".json,application/json" /><button id="importSave" class="pill-btn primary" type="button" disabled>불러오기</button><p id="importStatus" role="status" aria-live="polite"></p></div></details>
+      <button class="inventory-filter" id="inventoryFilter" type="button" aria-pressed="false">보유한 아이템만 보기</button>
       <div id="inventoryGrid" class="inventory-grid"></div>
     </section>
-    <!-- ========== 잡기 게임 ========== -->
     <section id="view-catch" class="view" aria-label="하치와레 잡기 게임">
       <button class="back-btn" data-back-games>← 게임 목록</button>
       <div class="game-head">
@@ -117,8 +114,6 @@
         <button class="pill-btn primary" id="catchStart">게임 시작 ▶</button>
       </div>
     </section>
-
-    <!-- ========== 카드 게임 ========== -->
     <section id="view-memory" class="view" aria-label="짝맞추기 게임">
       <button class="back-btn" data-back-games>← 게임 목록</button>
       <div class="game-head">
@@ -147,8 +142,7 @@
       <p class="challenge-info" id="omokGoal"></p><div class="record-panel" id="omokRecord"></div>
       <p class="board-status" id="omokStatus" role="status">당신 차례 · 흑돌</p>
       <div class="board-scroll"><div class="omok-board" id="omokBoard" role="grid" aria-label="15줄 오목판"></div></div>
-      <div class="board-controls"><button class="pill-btn" id="omokUndo">한 수 무르기</button><button class="pill-btn" id="omokHint">힌트</button><button class="pill-btn primary" id="omokRestart">새 대국</button></div>
-      <p class="board-note">힌트와 무르기를 사용해도 승리 보상은 받을 수 있어요. 중도 종료는 보상되지 않아요.</p>
+      <div class="board-controls"><button class="pill-btn" id="omokZoom" aria-pressed="false">판 확대</button><button class="pill-btn" id="omokUndo">한 수 무르기</button><button class="pill-btn" id="omokHint">힌트</button><button class="pill-btn primary" id="omokRestart">새 대국</button></div>
     </section>
     <section id="view-chess" class="view" aria-label="체스 봇 대결">
       <button class="back-btn" data-back-games>← 게임 목록</button>
@@ -157,9 +151,8 @@
       <div class="board-toolbar"><label for="chessLevel">봇 난이도</label><select id="chessLevel" class="level-select" aria-label="체스 봇 난이도"></select><span class="board-clock">⏱ <b id="chessTime">0:00</b></span></div>
       <p class="challenge-info" id="chessGoal"></p><div class="record-panel" id="chessRecord"></div>
       <p class="board-status" id="chessStatus" role="status">당신 차례 · 백</p>
-      <div class="chess-board" id="chessBoard" role="grid" aria-label="8줄 체스판"></div>
-      <div class="board-controls"><button class="pill-btn" id="chessUndo">한 수 무르기</button><button class="pill-btn" id="chessHint">힌트</button><button class="pill-btn" id="chessFlip">판 뒤집기</button><button class="pill-btn primary" id="chessRestart">새 대국</button></div>
-      <p class="board-note">체크·캐슬링·앙파상 지원 · 폰은 끝 칸에서 퀸으로 자동 승격 · 무승부는 보상 없음</p>
+      <div class="board-scroll"><div class="chess-board" id="chessBoard" role="grid" aria-label="8줄 체스판"></div></div>
+      <div class="board-controls"><button class="pill-btn" id="chessZoom" aria-pressed="false">판 확대</button><button class="pill-btn" id="chessUndo">한 수 무르기</button><button class="pill-btn" id="chessHint">힌트</button><button class="pill-btn" id="chessFlip">판 뒤집기</button><button class="pill-btn primary" id="chessRestart">새 대국</button></div>
     </section>
     <section id="view-starlane" class="view" aria-label="별사탕 언덕 무한 달리기">
       <button class="back-btn" data-back-games>← 게임 목록</button>
@@ -169,14 +162,13 @@
       <div class="record-panel" id="starlaneRecord">최고 0점 · 누적 0회</div>
       <div class="runner-frame"><canvas id="starlaneCanvas" width="800" height="380" aria-label="달리기 게임 화면" role="img"></canvas><div class="runner-overlay" id="starlaneOverlay"><strong id="starlaneHeadline">별사탕 언덕</strong><span id="starlaneMessage">점프해서 장애물을 넘고 별사탕을 모아요.</span><button class="pill-btn primary" id="starlaneStart">달리기 시작 ▶</button></div></div>
       <div class="board-controls"><button class="pill-btn primary" id="starlaneJump" aria-label="점프">점프 ↑</button><button class="pill-btn" id="starlanePause" disabled>일시정지</button></div>
-      <p class="board-note">화면 터치·점프 버튼·스페이스/↑ 키로 점프 · 공중에서 한 번 더 점프 · 10점당 🪙1, 종료 시 지급</p>
     </section>
   </main>
 
   <div id="notice" class="notice" role="status" aria-live="polite"></div>
 
-  <script src="board-games.js?v=11"></script>
-  <script src="starlane.js?v=10"></script>
-  <script src="app.js?v=11"></script>
+  <script src="board-games.js?v=15"></script>
+  <script src="starlane.js?v=15"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>

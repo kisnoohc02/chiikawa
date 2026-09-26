@@ -1,8 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <svg xmlns="http://www.w3.org/2000/svg" class="mascot" viewBox="105 84 350 310" role="img" aria-label="하치와레 얼굴">
             
-            <style>/* 캐릭터는 밝은 색을 유지해 두 테마에서 같은 하치와레로 보인다. */
-.body { fill: #fffdfa; stroke: #262321; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+            <style>.body { fill: #fffdfa; stroke: #262321; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
 .tail { fill: #7faac3; stroke: #262321; stroke-width: 8; stroke-linejoin: round; }
 .blue-patch { fill: #7faac3; }
 .hair-line { fill: none; stroke: #262321; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
@@ -11,8 +10,6 @@
 .brow,.eye,.mouth-dot { fill: #262321; }.eye-shine { fill: #fff; }
 .tongue { fill: #ed8fa9; }
 .eye-line,.mouth { fill: none; stroke: #262321; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
-.cheek-hit { fill: #fff; opacity: 0; pointer-events: all; cursor: grab; }
-.cheek-hit:active { cursor: grabbing; }
 </style><path class="tail" d="M368 426 Q386 430 398 412 Q413 395 426 404 Q441 414 431 427 Q416 443 387 441 Q375 437 368 426Z" />
             <path class="body" d="M179 165 Q152 177 136 208 Q115 246 119 284 Q119 316 148 334 Q132 328 130 341 Q130 356 158 364 Q164 363 168 375 Q171 412 198 433 Q183 441 182 455 Q183 469 198 468 Q211 466 220 449 Q254 464 297 461 Q303 469 305 480 Q308 494 319 486 Q329 477 328 456 Q366 442 383 414 Q392 398 393 376 Q394 366 383 356 Q378 344 387 332 Q396 322 404 331 Q413 343 414 357 Q429 339 433 333 Q451 301 444 266 Q439 229 413 202 Q393 184 364 179 Q324 163 286 171 Q244 163 215 172 Q192 158 179 165 Z" />
             <path class="blue-patch" d="M195 144 Q207 113 224 96 Q232 87 241 92 Q262 102 276 136 Q304 134 326 145 Q355 122 374 115 Q390 109 400 126 Q411 149 415 180 Q416 196 410 204 Q398 219 372 211 Q319 202 286 173 Q268 192 229 191 Q195 191 177 174 Q179 160 195 144 Z" />

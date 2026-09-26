@@ -1,10 +1,12 @@
 /* Original endless runner: Hachiware's star candy hill. Canvas and offline SVG art. */
 (() => {
   'use strict';
-  const W=800,H=380,GROUND=300,PX=150;
+  let W=window.innerWidth<600?520:800,PX=W===520?125:150;
+  const H=380,GROUND=300;
   const $=s=>document.querySelector(s);
   const rewardForScore=score=>Math.floor(Math.max(0,score)/10);
   const scoreFor=(distance,stars)=>Math.floor(Math.max(0,distance)/12)+Math.max(0,stars)*35;
+  const touchesStar=(playerY,starY)=>Math.abs((playerY-43)-starY)<43;
   const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
   const rand=(a,b)=>a+Math.random()*(b-a);
   function init({state,save,earn,notice,sndPoke,sndBad,sndWin}) {
@@ -14,16 +16,31 @@
     const scoreEl=$('#starlaneScore'),bestEl=$('#starlaneBest'),starsEl=$('#starlaneStars');
     state.starlane={best:0,runs:0,totalScore:0,totalCoins:0,bestStars:0,...(state.starlane||{})};
     let mode='ready',distance=0,stars=0,objects=[],nextSpawn=600,frame=0,lastTime=0;
-    let y=GROUND,vy=0,jumps=0,holding=false,holdUntil=0,score=0,mascotImage=null;
+    let y=GROUND,vy=0,jumps=0,holding=false,holdUntil=0,score=0,mascotImage=null,spriteKey=null;
+    let displayedScore=-1,displayedStars=-1,sky=null,skyDark=null;
     const dpr=clamp(window.devicePixelRatio||1,1,2);
-    canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+    function resizeCanvas(force=false){
+      const width=window.innerWidth<600?520:800;
+      if(!force&&W===width)return;
+      W=width;PX=W===520?125:150;
+      canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.aspectRatio=`${W} / ${H}`;
+      ctx.setTransform(dpr,0,0,dpr,0,0);sky=null;draw();
+    }
+    resizeCanvas(true);
     function record(){
       bestEl.textContent=state.starlane.best;
       $('#starlaneSummary').textContent=`최고 ${state.starlane.best}점`;
       $('#starlaneRecord').textContent=`🏆 최고 ${state.starlane.best}점 · 최고 별 ${state.starlane.bestStars}개 · 플레이 ${state.starlane.runs}회 · 누적 ${state.starlane.totalScore}점`;
     }
-    function updateScore(){score=scoreFor(distance,stars);scoreEl.textContent=score;starsEl.textContent=stars;}
+    function updateScore(){
+      score=scoreFor(distance,stars);
+      if(score!==displayedScore){scoreEl.textContent=score;displayedScore=score;}
+      if(stars!==displayedStars){starsEl.textContent=stars;displayedStars=stars;}
+    }
     function sprite(){
+      const key=state.equipped?.accessory||'';
+      if(spriteKey===key&&mascotImage)return;
+      spriteKey=key;mascotImage=null;
       const original=$('#mascot');if(!original)return;
       const svg=original.cloneNode(true);
       svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.setAttribute('viewBox','105 80 350 420');
@@ -81,13 +98,13 @@
       sndPoke();
     }
     function spawn(){
-      while(nextSpawn<distance+820){
+      while(nextSpawn<distance+W+20){
         const type=Math.random()<.38?'gap':'rock';
         const w=type==='gap'?rand(86,125):rand(34,50);
-        objects.push({x:nextSpawn,w,type,starX:nextSpawn+w*.5,starY:type==='gap'?214:224,taken:false});
+        objects.push({x:nextSpawn,w,type,starX:nextSpawn+w*.5,starY:type==='gap'?125:133,taken:false});
         nextSpawn+=w+rand(310,480);
       }
-      objects=objects.filter(o=>o.x+o.w>distance-240);
+      while(objects.length&&objects[0].x+objects[0].w<distance-240)objects.shift();
     }
     function step(dt,now){
       const speed=Math.min(440,225+distance*.009);
@@ -100,7 +117,7 @@
       if(!gap&&vy>=0&&prevY<=GROUND&&y>=GROUND){y=GROUND;vy=0;jumps=0;}
       for(const o of objects){
         if(o.type==='rock'&&distance+19>o.x&&distance-19<o.x+o.w&&y>GROUND-28){finish();return;}
-        if(!o.taken&&Math.abs(distance-o.starX)<33&&Math.abs((y-43)-o.starY)<43){o.taken=true;stars++;sndPoke();}
+        if(!o.taken&&Math.abs(distance-o.starX)<33&&touchesStar(y,o.starY)){o.taken=true;stars++;sndPoke();}
       }
       if(y>GROUND+75){finish();return;}
       updateScore();
@@ -126,8 +143,10 @@
     }
     function draw(){
       const dark=document.documentElement.dataset.theme==='dark';
-      const sky=ctx.createLinearGradient(0,0,0,GROUND);
-      sky.addColorStop(0,dark?'#1d2d47':'#b9e8ee');sky.addColorStop(1,dark?'#47516a':'#f9e9dc');
+      if(!sky||skyDark!==dark){
+        sky=ctx.createLinearGradient(0,0,0,GROUND);skyDark=dark;
+        sky.addColorStop(0,dark?'#1d2d47':'#b9e8ee');sky.addColorStop(1,dark?'#47516a':'#f9e9dc');
+      }
       ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
       const hillOffset=(distance*.12)%350;
       ctx.fillStyle=dark?'#485770':'#d4e3ce';
@@ -176,8 +195,9 @@
     });
     window.addEventListener('keyup',e=>{if(['Space','ArrowUp','KeyW'].includes(e.code))holding=false;});
     document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
+    window.addEventListener('resize',()=>{if((window.innerWidth<600?520:800)!==W){pause();resizeCanvas();}});
     reset();
     return {enter(){draw();},leave(){pause();}};
   }
-  window.HachiStarlane={init,_test:{rewardForScore,scoreFor}};
+  window.HachiStarlane={init,_test:{rewardForScore,scoreFor,touchesStar}};
 })();

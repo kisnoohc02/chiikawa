@@ -330,50 +330,69 @@
     function setup(game) {
       const select=$(`#${game}Level`),status=$(`#${game}Status`),clock=$(`#${game}Time`);
       select.innerHTML=Array.from({length:10},(_,i)=>`<option value="${i+1}">Lv${i+1}</option>`).join('');
-      let level=1,seconds=0,startedAt=0,timer=null,task=null,finished=false,thinking=false;
+      let level=1,seconds=0,startedAt=0,hiddenAt=0,timer=null,task=null,finished=false,thinking=false;
       let board,history=[],last=-1,selected=-1,hint=-1,flipped=false,seen={};
-      const displayTime=()=>{if(startedAt)seconds=Math.floor((Date.now()-startedAt)/1000);clock.textContent=fmt(seconds);};
+      const target=$(`#${game}Board`),cells=[];
+      let worker=null,generation=0;
+      const cancelBot=()=>{generation++;clearTimeout(task);task=null;worker?.terminate();worker=null;};
+      function botMove(position){
+        try {
+          worker ||= new Worker('board-worker.js');
+          return new Promise((resolve,reject)=>{
+            worker.onmessage=e=>resolve(e.data.move);
+            worker.onerror=e=>{e.preventDefault();worker?.terminate();worker=null;reject(e);};
+            worker.postMessage({game,position,level});
+          });
+        } catch {worker?.terminate();worker=null;return Promise.resolve(game==='omok'?oBot(position,level):chessBot(position,level));}
+      }
+      const displayTime=()=>{if(startedAt)seconds=Math.floor(((hiddenAt||Date.now())-startedAt)/1000);clock.textContent=fmt(seconds);};
       const startTime=()=>{if(startedAt)return;startedAt=Date.now();timer=setInterval(displayTime,1000);select.disabled=true;};
-      const stopTime=()=>{displayTime();clearInterval(timer);timer=null;startedAt=0;select.disabled=false;};
+      const stopTime=()=>{displayTime();clearInterval(timer);timer=null;startedAt=0;hiddenAt=0;select.disabled=false;};
       const say=t=>{status.textContent=t;};
       const legalNow=()=>game==='chess'?legalChess(board):[];
+      function buildCells(){
+        const fragment=document.createDocumentFragment();cells.length=0;
+        for(let display=0;display<(game==='omok'?O*O:64);display++){
+          const cell=document.createElement('button');cell.type='button';cell.setAttribute('role','gridcell');
+          cells.push(cell);fragment.append(cell);
+        }
+        target.replaceChildren(fragment);
+      }
       function render(){
-        const target=$(`#${game}Board`);target.innerHTML='';
         if(game==='omok'){
           for(let i=0;i<O*O;i++){
-            const r=Math.floor(i/O),c=i%O,cell=document.createElement('button');
+            const r=Math.floor(i/O),c=i%O,cell=cells[i],value=board[i];
             cell.type='button';cell.className='omok-cell'+(board[i]?' occupied':'')+(last===i?' last':'')+(hint===i?' hint':'');
             cell.dataset.i=i;cell.setAttribute('role','gridcell');
             cell.setAttribute('aria-label',`${r+1}행 ${c+1}열 ${board[i]===1?'흑돌':board[i]===2?'백돌':'빈 곳'}`);
-            if(board[i]){const stone=document.createElement('span');stone.className='stone '+(board[i]===1?'black':'white');cell.append(stone);}
-            target.append(cell);
+            if(cell._stone!==value){cell.replaceChildren();if(value){const stone=document.createElement('span');stone.className='stone '+(value===1?'black':'white');cell.append(stone);}cell._stone=value;}
           }
         }else{
-          const legal=selected>=0?legalNow().filter(m=>m.from===selected).map(m=>m.to):[];
+          const legal=new Set(selected>=0?legalNow().filter(m=>m.from===selected).map(m=>m.to):[]);
           for(let display=0;display<64;display++){
-            const i=flipped?63-display:display,r=i>>3,c=i&7,p=board.b[i],cell=document.createElement('button');
+            const i=flipped?63-display:display,r=i>>3,c=i&7,p=board.b[i],cell=cells[display];
             cell.type='button';cell.dataset.i=i;cell.setAttribute('role','gridcell');
-            cell.className=`chess-cell ${(r+c)%2?'dark-square':'light-square'}${selected===i?' selected':''}${legal.includes(i)?' legal':''}${last===i?' last':''}${hint===i?' hint':''}`;
-            if(p){cell.textContent=glyphs[p];cell.classList.add(side(p)==='w'?'white-piece':'black-piece');}
+            cell.className=`chess-cell ${(r+c)%2?'dark-square':'light-square'}${selected===i?' selected':''}${legal.has(i)?' legal':''}${last===i?' last':''}${hint===i?' hint':''}`;
+            const glyph=p?glyphs[p]:'';if(cell.textContent!==glyph)cell.textContent=glyph;
+            if(p)cell.classList.add(side(p)==='w'?'white-piece':'black-piece');
             const coord='abcdefgh'[c]+(8-r);
             cell.setAttribute('aria-label',`${coord} ${p?(side(p)==='w'?'백':'흑')+' '+p.toUpperCase():'빈 칸'}`);
-            target.append(cell);
           }
         }
         $(`#${game}Undo`).disabled=finished||!history.length;
         $(`#${game}Hint`).disabled=finished||thinking;
       }
       function reset(){
-        clearTimeout(task);clearInterval(timer);task=null;timer=null;startedAt=0;seconds=0;clock.textContent='0:00';
+        cancelBot();clearInterval(timer);timer=null;startedAt=0;hiddenAt=0;seconds=0;clock.textContent='0:00';
         finished=false;thinking=false;history=[];last=-1;selected=-1;hint=-1;seen={};
         select.disabled=false;level=Number(select.value);board=game==='omok'?Array(O*O).fill(0):initialChess();
         if(game==='chess')seen[chessKey(board)]=1;
         say(game==='omok'?'당신 차례 · 흑돌':'당신 차례 · 백');
-        renderRecord(game,level);render();
+        buildCells();renderRecord(game,level);render();
       }
       function resolve(result){
         if(finished)return;
-        finished=true;thinking=false;clearTimeout(task);task=null;stopTime();
+        finished=true;thinking=false;cancelBot();stopTime();
         finish(game,level,result,seconds,game==='omok'?history.length:board.ply);
         renderRecord(game,level);render();
         say(result==='win'?'승리! 새 대국에서 또 만나요.':result==='draw'?'무승부! 새 대국에서 다시 만나요.':'봇 승리! 새 대국에서 다시 만나요.');
@@ -387,8 +406,11 @@
         if(move.win){resolve('win');return;}
         if(board.every(Boolean)){resolve('draw');return;}
         thinking=true;say('하치와레가 생각 중…');render();
-        task=setTimeout(()=>{if(finished)return;
-          const bot=oBot(board.slice(),level);if(bot==null){resolve('draw');return;}
+        const request=generation;
+        task=setTimeout(async()=>{if(finished||request!==generation)return;
+          let bot;try{bot=await botMove(board.slice());}catch{bot=oBot(board.slice(),level);}
+          if(finished||request!==generation)return;
+          if(bot==null){resolve('draw');return;}
           history.push(board.slice());board[bot]=2;last=bot;thinking=false;sndPoke();
           if(oWinner(board,bot)){resolve('loss');return;}
           if(board.every(Boolean)){resolve('draw');return;}
@@ -405,8 +427,11 @@
             const result=chessResult(board,seen);
             if(result){resolve(result==='w'?'win':result==='draw'?'draw':'loss');return;}
             thinking=true;say('하치와레가 수를 읽는 중…');render();
-            task=setTimeout(()=>{if(finished)return;
-              const bot=chessBot(board,level);if(!bot){resolve('win');return;}
+            const request=generation;
+            task=setTimeout(async()=>{if(finished||request!==generation)return;
+              let bot;try{bot=await botMove(board);}catch{bot=chessBot(board,level);}
+              if(finished||request!==generation)return;
+              if(!bot){resolve('win');return;}
               history.push(board);board=chessApply(board,bot);last=bot.to;thinking=false;sndPoke();
               seen[chessKey(board)]=(seen[chessKey(board)]||0)+1;
               const done=chessResult(board,seen);
@@ -427,7 +452,7 @@
       $(`#${game}Restart`).addEventListener('click',reset);
       $(`#${game}Undo`).addEventListener('click',()=>{
         if(finished||!history.length)return;
-        clearTimeout(task);task=null;thinking=false;
+        cancelBot();thinking=false;
         if(game==='omok'){
           board=history.pop();if(history.length && board.filter(Boolean).length%2===1)board=history.pop();
           last=-1;
@@ -453,9 +478,22 @@
         say('반짝이는 칸을 참고하세요.');render();
       });
       if(game==='chess')$('#chessFlip').addEventListener('click',()=>{flipped=!flipped;render();});
+      document.addEventListener('visibilitychange',()=>{
+        if(!startedAt)return;
+        if(document.hidden){hiddenAt=Date.now();displayTime();}
+        else if(hiddenAt){startedAt+=Date.now()-hiddenAt;hiddenAt=0;displayTime();}
+      });
+      $(`#${game}Zoom`).addEventListener('click',()=>{
+        const holder=$(`#${game}Board`).parentElement;
+        const zoomed=holder.classList.toggle('is-zoomed');
+        const button=$(`#${game}Zoom`);
+        button.textContent=zoomed?'전체 보기':'판 확대';
+        button.setAttribute('aria-pressed',String(zoomed));
+        holder.scrollLeft=zoomed?Math.max(0,(holder.scrollWidth-holder.clientWidth)/2):0;
+      });
       reset();
       return {enter(){if(finished)reset();},leave(){
-        clearTimeout(task);task=null;if(startedAt||thinking){clearInterval(timer);timer=null;startedAt=0;finished=true;thinking=false;select.disabled=false;}
+        cancelBot();if(startedAt||thinking){clearInterval(timer);timer=null;startedAt=0;hiddenAt=0;finished=true;thinking=false;select.disabled=false;}
       }};
     }
     controllers.omok=setup('omok');controllers.chess=setup('chess');summary('omok');summary('chess');
