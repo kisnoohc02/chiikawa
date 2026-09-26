@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#fbe6ef" />
+  <title>몽글이 🐰 볼따구 놀이터</title>
+  <meta name="description" content="몽글몽글 마스코트를 쓰다듬고 볼을 콕콕! 미니게임도 즐기는 귀여운 놀이터" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='55' r='34' fill='%23fff'/%3E%3Ccircle cx='40' cy='52' r='3.5' fill='%23333'/%3E%3Ccircle cx='60' cy='52' r='3.5' fill='%23333'/%3E%3Ccircle cx='34' cy='60' r='5' fill='%23f7b7cf'/%3E%3Ccircle cx='66' cy='60' r='5' fill='%23f7b7cf'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="sky">
+    <span class="cloud c1"></span>
+    <span class="cloud c2"></span>
+    <span class="cloud c3"></span>
+  </div>
+
+  <header class="app-header">
+    <h1 class="logo">🐰 몽글이 놀이터</h1>
+    <button id="soundToggle" class="sound-btn" aria-label="소리 켜기/끄기" title="소리 켜기/끄기">🔔</button>
+  </header>
+
+  <main class="app-main">
+    <!-- ========== 놀아주기 (마스코트) ========== -->
+    <section id="view-play" class="view is-active" aria-label="마스코트 놀이터">
+      <div class="mascot-stage">
+        <div class="mood-bar" aria-hidden="true">
+          <div class="mood-bar__fill" id="moodFill"></div>
+        </div>
+        <p class="mood-label"><span id="moodEmoji">😊</span> <span id="moodText">기분 좋아!</span></p>
+
+        <div class="mascot-wrap" id="mascotWrap">
+          <!-- SVG 마스코트: JS로 표정 제어 -->
+          <svg id="mascot" class="mascot" viewBox="0 0 200 220" role="img" aria-label="몽글이 마스코트">
+            <ellipse class="shadow" cx="100" cy="205" rx="52" ry="10" />
+            <!-- 귀 -->
+            <path class="ear ear-l" d="M70 60 Q58 12 78 20 Q86 40 90 62 Z" />
+            <path class="ear ear-r" d="M130 60 Q142 12 122 20 Q114 40 110 62 Z" />
+            <path class="ear-inner" d="M74 54 Q68 26 78 30 Q82 42 84 56 Z" />
+            <path class="ear-inner" d="M126 54 Q132 26 122 30 Q118 42 116 56 Z" />
+            <!-- 몸통 -->
+            <ellipse class="body" cx="100" cy="130" rx="66" ry="62" />
+            <!-- 팔 -->
+            <ellipse class="arm arm-l" cx="42" cy="140" rx="14" ry="20" />
+            <ellipse class="arm arm-r" cx="158" cy="140" rx="14" ry="20" />
+            <!-- 볼터치 -->
+            <circle class="cheek cheek-l" cx="66" cy="140" r="13" />
+            <circle class="cheek cheek-r" cx="134" cy="140" r="13" />
+            <!-- 눈 -->
+            <g id="eyes">
+              <ellipse class="eye eye-l" cx="80" cy="122" rx="5.5" ry="7.5" />
+              <ellipse class="eye eye-r" cx="120" cy="122" rx="5.5" ry="7.5" />
+              <circle class="eye-shine" cx="82" cy="119" r="2" />
+              <circle class="eye-shine" cx="122" cy="119" r="2" />
+            </g>
+            <!-- 감은 눈 (숨김) -->
+            <g id="eyesClosed" style="display:none">
+              <path class="eye-line" d="M73 122 Q80 128 87 122" />
+              <path class="eye-line" d="M113 122 Q120 128 127 122" />
+            </g>
+            <!-- 입 -->
+            <path id="mouth" class="mouth" d="M92 140 Q100 148 108 140" />
+          </svg>
+
+          <div class="tap-hint" id="tapHint">콕! 눌러보세요 👆</div>
+        </div>
+
+        <div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
+
+        <div class="play-actions">
+          <button class="pill-btn" id="btnPet">🫳 쓰다듬기</button>
+          <button class="pill-btn" id="btnFeed">🍡 간식주기</button>
+          <button class="pill-btn" id="btnSpin">🎁 랜덤뽑기</button>
+        </div>
+        <p class="stat-line">함께한 콕콕 <b id="totalPokes">0</b>번 · 오늘도 몽글몽글 💕</p>
+      </div>
+    </section>
+
+    <!-- ========== 잡기 게임 ========== -->
+    <section id="view-catch" class="view" aria-label="몽글이 잡기 게임">
+      <div class="game-head">
+        <h2>🕳️ 몽글이 잡기</h2>
+        <p class="game-desc">튀어나오는 몽글이를 콕! 폭탄🧨은 피하세요</p>
+      </div>
+      <div class="score-row">
+        <div class="score-chip">점수 <b id="catchScore">0</b></div>
+        <div class="score-chip">시간 <b id="catchTime">30</b></div>
+        <div class="score-chip">최고 <b id="catchBest">0</b></div>
+      </div>
+      <div class="hole-grid" id="holeGrid"></div>
+      <div class="game-btn-row">
+        <button class="pill-btn primary" id="catchStart">게임 시작 ▶</button>
+      </div>
+    </section>
+
+    <!-- ========== 카드 게임 ========== -->
+    <section id="view-memory" class="view" aria-label="짝맞추기 게임">
+      <div class="game-head">
+        <h2>🃏 몽글 카드 짝맞추기</h2>
+        <p class="game-desc">같은 그림 카드를 찾아 뒤집어요</p>
+      </div>
+      <div class="score-row">
+        <div class="score-chip">뒤집기 <b id="memMoves">0</b></div>
+        <div class="score-chip">시간 <b id="memTime">0</b>초</div>
+        <div class="score-chip">최고 <b id="memBest">-</b></div>
+      </div>
+      <div class="card-grid" id="cardGrid"></div>
+      <div class="game-btn-row">
+        <button class="pill-btn primary" id="memReset">새 게임 🔄</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========== 하단 반응형 네비게이션 ========== -->
+  <nav class="tabbar" aria-label="메뉴">
+    <button class="tab is-active" data-view="play"><span class="tab-ico">🐰</span><span class="tab-txt">놀아주기</span></button>
+    <button class="tab" data-view="catch"><span class="tab-ico">🕳️</span><span class="tab-txt">잡기</span></button>
+    <button class="tab" data-view="memory"><span class="tab-ico">🃏</span><span class="tab-txt">카드</span></button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
