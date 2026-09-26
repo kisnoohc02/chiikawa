@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="100 50 360 340" role="img" aria-label="하치와레">
+  <path d="M184 169 Q145 179 124 235 Q106 280 124 322 Q145 365 210 369 Q271 390 336 372 Q417 361 440 307 Q454 244 410 194 Q365 163 321 174 Q271 159 222 173 Q202 163 184 169Z" fill="#fffdfa" stroke="#262321" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M192 151 Q201 125 218 91 Q231 66 245 68 Q263 74 276 108 Q299 108 322 123 Q347 101 369 91 Q387 84 398 101 Q407 117 410 184 Q395 202 369 191 Q318 185 282 165 Q266 187 224 194 Q194 197 176 177 Q181 164 192 151Z" fill="#7faac3"/>
+  <path d="M196 149 Q212 99 229 75 Q246 48 276 108 Q300 107 322 123 Q358 91 373 90 Q405 83 410 183 M176 177 Q194 197 224 194 Q266 187 282 165 Q318 185 369 191 Q395 202 410 184" fill="none" stroke="#262321" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="173" cy="278" rx="29" ry="25" fill="#f4bdca"/>
+  <ellipse cx="359" cy="299" rx="30" ry="26" fill="#f4bdca"/>
+  <path d="M161 272 l-5 11 M172 271 l-5 13 M183 274 l-5 11 M349 296 l-5 12 M360 296 l-5 12 M371 299 l-5 10" fill="none" stroke="#262321" stroke-width="7" stroke-linecap="round"/>
+  <ellipse cx="223" cy="261" rx="21" ry="22" fill="#262321"/>
+  <ellipse cx="320" cy="270" rx="21" ry="21" fill="#262321"/>
+  <ellipse cx="228" cy="253" rx="7" ry="5" fill="#fff"/>
+  <ellipse cx="324" cy="262" rx="7" ry="5" fill="#fff"/>
+  <path d="M251 297 Q258 310 267 300 L273 307 Q282 310 291 298" fill="none" stroke="#262321" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

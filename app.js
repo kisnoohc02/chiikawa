@@ -82,34 +82,43 @@
   });
   renderTheme();
 
-  /* ================= 마스코트 인터랙션 ================= */
-  const wrap = $("#mascotWrap");
-  const mouth = $("#mouth");
-  const eyes = $("#eyes"), eyesClosed = $("#eyesClosed");
+  /* ================= 하치와레 인터랙션 ================= */
+  const wrap = $("#mascotWrap"), mascot = $("#mascot");
+  const mouth = $("#mouth"), tongue = $("#tongue"), bodyShape = $("#bodyShape");
+  const eyeGroups = { open: $("#eyes"), closed: $("#eyesClosed"), happy: $("#eyesHappy"), tense: $("#eyesTense") };
+  const cheekLeft = $("#cheekLeft"), cheekRight = $("#cheekRight");
   const moodFill = $("#moodFill"), moodText = $("#moodText"), moodEmoji = $("#moodEmoji");
-  const totalPokes = $("#totalPokes");
-  const tapHint = $("#tapHint");
-
+  const totalPokes = $("#totalPokes"), tapHint = $("#tapHint");
+  const BODY_BASE = bodyShape.getAttribute("d");
   const MOUTH = {
-    smile: "M251 297 Q257 315 269 305 Q276 323 286 306 L291 299 M270 305 Q271 294 278 293",
-    big:   "M251 298 Q269 339 292 298 Q273 350 251 298 Z",
-    o:     "M269 304 a12 15 0 1 0 1 0 Z",
-    flat:  "M258 312 Q270 315 283 310",
-    sad:   "M257 317 Q270 305 283 319",
+    smile: "M251 297 Q258 310 267 300 L273 307 Q282 310 291 298 M273 307 Q269 319 265 310",
+    happy: "M247 303 Q269 341 294 300 Q284 353 266 338 Q251 328 247 303 Z",
+    surprise: "M271 313 m-11 0 a11 14 0 1 0 22 0 a11 14 0 1 0 -22 0",
+    content: "M250 307 Q270 324 292 306",
+    pout: "M255 312 Q270 308 285 313",
+    sad: "M257 319 Q271 306 286 319",
   };
-  function setMouth(k) { mouth.setAttribute("d", MOUTH[k]); }
-
+  let eyeMode = "open", reactionTimer = null, drag = null, springFrame = null;
+  function setEyes(mode) {
+    eyeMode = mode;
+    Object.entries(eyeGroups).forEach(([name, group]) => { group.style.display = name === mode ? "" : "none"; });
+  }
+  function setFace(eyes, expression) {
+    setEyes(eyes);
+    mouth.setAttribute("d", MOUTH[expression]);
+    tongue.style.display = expression === "happy" ? "" : "none";
+  }
   function renderMood() {
     const m = Math.max(0, Math.min(100, state.mood));
     moodFill.style.width = m + "%";
     $("#moodBar").setAttribute("aria-valuenow", m);
     totalPokes.textContent = state.pokes;
-    if (m >= 75) { moodEmoji.textContent = "😍"; moodText.textContent = "완전 행복해!"; setMouth("big"); }
-    else if (m >= 45) { moodEmoji.textContent = "😊"; moodText.textContent = "기분 좋아!"; setMouth("smile"); }
-    else if (m >= 20) { moodEmoji.textContent = "🥲"; moodText.textContent = "조금 심심해…"; setMouth("flat"); }
-    else { moodEmoji.textContent = "😖"; moodText.textContent = "삐졌어! 놀아줘!"; setMouth("sad"); }
+    if (m >= 75) { moodEmoji.textContent = "🥰"; moodText.textContent = "완전 행복해!"; }
+    else if (m >= 45) { moodEmoji.textContent = "😊"; moodText.textContent = "기분 좋아!"; }
+    else if (m >= 20) { moodEmoji.textContent = "😐"; moodText.textContent = "조금 심심해…"; }
+    else { moodEmoji.textContent = "🥺"; moodText.textContent = "놀아줘!"; }
+    if (reactionTimer === null && !drag) setFace("open", m < 20 ? "sad" : m < 45 ? "pout" : "smile");
   }
-
   function floatFx(emoji, x, y) {
     const el = document.createElement("div");
     el.className = "fx"; el.textContent = emoji;
@@ -117,68 +126,147 @@
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1000);
   }
-
-  function blink() {
-    eyes.style.display = "none"; eyesClosed.style.display = "";
-    setTimeout(() => { eyes.style.display = ""; eyesClosed.style.display = "none"; }, 140);
+  function animateWrap(name) {
+    wrap.classList.remove("happy", "squish", "bounce");
+    void wrap.offsetWidth;
+    wrap.classList.add(name);
   }
-  setInterval(() => { if (Math.random() < 0.5) blink(); }, 2600);
+  function react(eyes, expression, animation, duration = 850) {
+    clearTimeout(reactionTimer);
+    setFace(eyes, expression);
+    if (animation) animateWrap(animation);
+    reactionTimer = setTimeout(() => {
+      reactionTimer = null;
+      wrap.classList.remove("happy", "squish", "bounce");
+      renderMood();
+    }, duration);
+  }
+  function blink() {
+    if (eyeMode !== "open" || drag || reactionTimer !== null) return;
+    setEyes("closed");
+    setTimeout(() => { if (!drag && reactionTimer === null && eyeMode === "closed") setEyes("open"); }, 140);
+  }
+  setInterval(() => { if (Math.random() < .5) blink(); }, 2600);
 
-  function pokeAt(clientX, clientY) {
+  function pokeAt(x, y) {
     state.pokes++;
     state.mood = Math.min(100, state.mood + 3);
-    wrap.classList.remove("squish"); void wrap.offsetWidth; wrap.classList.add("squish");
-    const happy = state.mood >= 55;
-    if (happy) { wrap.classList.remove("happy"); void wrap.offsetWidth; wrap.classList.add("happy"); }
-    setMouth(happy ? "big" : "o");
-    blink();
-    const emo = happy ? ["💕", "✨", "💗", "🌸"][Math.floor(Math.random() * 4)] : "❓";
-    floatFx(emo, clientX, clientY);
-    sndPoke();
-    tapHint.classList.add("hide");
-    clearTimeout(pokeAt._t);
-    pokeAt._t = setTimeout(renderMood, 350);
-    renderMood(); moodFill.style.width = state.mood + "%"; totalPokes.textContent = state.pokes;
-    save();
+    const cheerful = state.mood >= 45;
+    react(cheerful ? "happy" : "open", cheerful ? "happy" : "surprise", "squish", 850);
+    floatFx(cheerful ? ["💙", "✨", "💕"][Math.floor(Math.random() * 3)] : "✦", x, y);
+    sndPoke(); tapHint.classList.add("hide");
+    renderMood(); save();
   }
-
+  function svgPoint(clientX, clientY) {
+    const point = mascot.createSVGPoint();
+    point.x = clientX; point.y = clientY;
+    return point.matrixTransform(mascot.getScreenCTM().inverse());
+  }
+  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+  function deform(side, dx, dy) {
+    let d = BODY_BASE;
+    if (side === "left") {
+      d = d.replace("Q104 292 127 323 Q133 333 150 344", `Q${Math.round(104 + dx)} ${Math.round(292 + dy * .35)} ${Math.round(127 + dx * .8)} ${Math.round(323 + dy * .5)} Q${Math.round(133 + dx * .6)} ${Math.round(333 + dy * .5)} 150 344`);
+      cheekLeft.setAttribute("transform", `translate(${(dx * .48).toFixed(1)} ${(dy * .3).toFixed(1)})`);
+      cheekRight.removeAttribute("transform");
+    } else {
+      d = d.replace("Q448 317 442 277", `Q${Math.round(448 + dx)} ${Math.round(317 + dy * .4)} ${Math.round(442 + dx * .8)} ${Math.round(277 + dy * .5)}`);
+      cheekRight.setAttribute("transform", `translate(${(dx * .48).toFixed(1)} ${(dy * .3).toFixed(1)})`);
+      cheekLeft.removeAttribute("transform");
+    }
+    bodyShape.setAttribute("d", d);
+    mascot.style.transform = `rotate(${(dx * .035).toFixed(2)}deg)`;
+  }
+  function resetDeform() {
+    bodyShape.setAttribute("d", BODY_BASE);
+    cheekLeft.removeAttribute("transform"); cheekRight.removeAttribute("transform");
+    mascot.style.transform = "";
+    wrap.classList.remove("dragging");
+  }
   wrap.addEventListener("pointerdown", e => {
     e.preventDefault();
-    pokeAt(e.clientX, e.clientY);
+    cancelAnimationFrame(springFrame);
+    resetDeform();
+    const point = svgPoint(e.clientX, e.clientY);
+    const side = Math.hypot(point.x - 173, point.y - 278) < 62 ? "left"
+      : Math.hypot(point.x - 359, point.y - 299) < 62 ? "right" : null;
+    drag = { pointerId: e.pointerId, start: point, side, dx: 0, dy: 0, moved: false };
+    wrap.setPointerCapture(e.pointerId);
+    if (side) {
+      clearTimeout(reactionTimer); reactionTimer = null;
+      setFace("tense", "pout");
+      wrap.classList.add("dragging");
+      tapHint.classList.add("hide");
+    }
   });
+  wrap.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId !== drag.pointerId || !drag.side) return;
+    const point = svgPoint(e.clientX, e.clientY);
+    const rawX = point.x - drag.start.x;
+    drag.dx = drag.side === "left" ? clamp(rawX, -83, 16) : clamp(rawX, -16, 83);
+    drag.dy = clamp(point.y - drag.start.y, -35, 35);
+    drag.moved ||= Math.hypot(rawX, point.y - drag.start.y) > 9;
+    if (drag.moved) deform(drag.side, drag.dx, drag.dy);
+  });
+  function finishPointer(e) {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    const { side, dx, dy, moved } = drag;
+    drag = null;
+    if (!side || !moved) {
+      resetDeform();
+      pokeAt(e.clientX, e.clientY);
+      return;
+    }
+    const start = performance.now();
+    function spring(now) {
+      const t = Math.min(1, (now - start) / 420);
+      const ease = Math.exp(-7 * t) * Math.cos(16 * t);
+      deform(side, dx * ease, dy * ease);
+      if (t < 1) springFrame = requestAnimationFrame(spring);
+      else { resetDeform(); react("happy", "happy", "happy", 850); }
+    }
+    springFrame = requestAnimationFrame(spring);
+    state.pokes++;
+    state.mood = Math.min(100, state.mood + 4);
+    floatFx("💙", e.clientX, e.clientY);
+    sndHappy(); renderMood(); save();
+  }
+  wrap.addEventListener("pointerup", finishPointer);
+  wrap.addEventListener("pointercancel", finishPointer);
+  wrap.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault(); const r = wrap.getBoundingClientRect(); pokeAt(r.left + r.width / 2, r.top + r.height / 2);
+    }
+  });
+  setInterval(() => { state.mood = Math.max(0, state.mood - 1); renderMood(); save(); }, 9000);
 
-  // 기분은 시간이 지나면 서서히 내려감
-  setInterval(() => {
-    state.mood = Math.max(0, state.mood - 1);
-    renderMood(); save();
-  }, 9000);
-
-  // 버튼 액션
   $("#btnPet").addEventListener("click", () => {
     state.mood = Math.min(100, state.mood + 10);
-    wrap.classList.remove("happy", "squish"); void wrap.offsetWidth; wrap.classList.add("happy");
+    react("closed", "content", "happy", 1200);
     const r = wrap.getBoundingClientRect();
-    for (let i = 0; i < 3; i++) setTimeout(() => floatFx("💕", r.left + r.width * (.3 + Math.random() * .4), r.top + r.height * .3), i * 120);
+    for (let i = 0; i < 3; i++) setTimeout(() => floatFx("💕", r.left + r.width * (.3 + Math.random() * .4), r.top + r.height * .35), i * 130);
     sndHappy(); renderMood(); save();
   });
   $("#btnFeed").addEventListener("click", () => {
     state.mood = Math.min(100, state.mood + 14);
     const r = wrap.getBoundingClientRect();
-    floatFx("🍡", r.left + r.width / 2, r.top + r.height * .4);
-    setMouth("o"); wrap.classList.remove("bounce"); void wrap.offsetWidth; wrap.classList.add("bounce");
-    sndHappy(); setTimeout(renderMood, 500); save();
+    floatFx("🍡", r.left + r.width / 2, r.top + r.height * .35);
+    react("happy", "happy", "bounce", 1250);
+    sndHappy(); renderMood(); save();
   });
   const GACHA = ["🎀 리본", "🍓 딸기", "⭐ 별사탕", "🧦 양말", "🍄 버섯", "👑 왕관", "🫧 비눗방울", "🌈 무지개"];
   $("#btnSpin").addEventListener("click", () => {
     const prize = GACHA[Math.floor(Math.random() * GACHA.length)];
     const r = wrap.getBoundingClientRect();
+    react("open", "surprise", "bounce", 1500);
     floatFx("🎁", r.left + r.width / 2, r.top + r.height * .3);
-    wrap.classList.remove("bounce"); void wrap.offsetWidth; wrap.classList.add("bounce");
     sndWin();
-    setTimeout(() => floatFx(prize.split(" ")[0], r.left + r.width / 2, r.top + r.height * .2), 300);
-    setTimeout(() => { moodText.textContent = prize + " 획득!"; moodEmoji.textContent = "🎉"; }, 320);
+    setTimeout(() => {
+      setFace("happy", "happy");
+      floatFx(prize.split(" ")[0], r.left + r.width / 2, r.top + r.height * .2);
+      moodText.textContent = prize + " 획득!"; moodEmoji.textContent = "🎉";
+    }, 350);
     state.mood = Math.min(100, state.mood + 5); save();
-    setTimeout(renderMood, 1600);
   });
 
   /* 사운드 토글 */

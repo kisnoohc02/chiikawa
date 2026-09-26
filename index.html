@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M16 42 11 7 37 25Q50 21 63 25L89 7 84 42Q95 57 83 77Q72 93 50 93Q28 93 17 77Q5 57 16 42Z' fill='%23fff' stroke='%23476176' stroke-width='3'/%3E%3Cpath d='M14 39 11 7 37 25Q50 21 63 25L89 7 86 39Q73 47 64 42Q57 38 50 51Q43 38 36 42Q27 47 14 39Z' fill='%2378b8d9'/%3E%3Ccircle cx='37' cy='59' r='3'/%3E%3Ccircle cx='63' cy='59' r='3'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 </head>
 <body>
   <div class="sky" aria-hidden="true"><span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span></div>
@@ -29,28 +29,25 @@
   <main class="app-main">
     <!-- ========== 놀아주기 (마스코트) ========== -->
     <section id="view-play" class="view is-active" aria-label="하치와레 놀이터">
-      <div class="section-intro"><span class="eyebrow">TODAY WITH HACHIWARE</span><h2>오늘도 함께 놀자!</h2><p>하치와레를 콕 눌러 반응을 살펴보세요.</p></div>
+      <div class="section-intro"><span class="eyebrow">TODAY WITH HACHIWARE</span><h2>오늘도 함께 놀자!</h2><p>콕 누르거나 볼을 잡고 살짝 당겨보세요.</p></div>
       <div class="mascot-stage"><span class="scene-sun" aria-hidden="true">✳</span><span class="scene-sprout sprout-left" aria-hidden="true">✿</span><span class="scene-sprout sprout-right" aria-hidden="true">✿</span>
         <div class="mood-label"><span class="mood-caption">지금의 기분</span><strong><span id="moodEmoji">😊</span> <span id="moodText">기분 좋아!</span></strong></div>
         <div class="mood-bar" role="progressbar" aria-label="하치와레 기분" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70" id="moodBar"><div class="mood-bar__fill" id="moodFill"></div></div>
 
-        <div class="mascot-wrap" id="mascotWrap">
+        <div class="mascot-wrap" id="mascotWrap" role="button" tabindex="0" aria-label="하치와레를 누르거나 양 볼을 바깥으로 당겨보세요">
           <!-- 하치와레 SVG: 눈 깜빡임과 입 모양은 JS로 제어 -->
           <svg id="mascot" class="mascot" viewBox="0 0 562 562" role="img" aria-label="하치와레 캐릭터">
             <!-- 짧고 둥근 몸통과 발, 옆으로 나온 꼬리 -->
             <path class="tail" d="M362 431 Q390 443 405 419 Q420 400 430 409 Q440 417 424 433 Q406 454 372 451Z" />
-            <path class="body" d="M184 169 Q145 180 125 234 Q104 292 127 323 Q133 333 150 344 Q127 337 129 354 Q133 371 158 370 Q162 373 167 383 Q165 423 198 447 Q176 451 181 465 Q188 481 216 454 Q251 475 291 468 Q298 469 303 483 Q306 501 318 491 Q329 480 324 464 Q362 447 381 415 Q389 399 391 384 Q392 377 392 368 Q407 336 416 340 Q420 352 402 365 Q418 364 427 345 Q448 317 442 277 Q439 232 411 203 Q371 182 323 181 Q273 166 223 173 Q203 164 184 169Z" />
+            <path id="bodyShape" class="body" d="M184 169 Q145 180 125 234 Q104 292 127 323 Q133 333 150 344 Q127 337 129 354 Q133 371 158 370 Q162 373 167 383 Q165 423 198 447 Q176 451 181 465 Q188 481 216 454 Q251 475 291 468 Q298 469 303 483 Q306 501 318 491 Q329 480 324 464 Q362 447 381 415 Q389 399 391 384 Q386 366 382 351 Q382 338 392 330 Q400 324 407 333 Q413 343 402 361 Q419 357 427 345 Q448 317 442 277 Q439 232 411 203 Q371 182 323 181 Q273 166 223 173 Q203 164 184 169Z" />
             <!-- 파란 두 갈래 머리 무늬 -->
             <path class="blue-patch" d="M192 151 Q201 125 218 91 Q231 66 245 68 Q263 74 276 108 Q299 108 322 123 Q347 101 369 91 Q387 84 398 101 Q407 117 410 184 Q395 202 369 191 Q318 185 282 165 Q266 187 224 194 Q194 197 176 177 Q181 164 192 151Z" />
             <path class="hair-line" d="M196 149 Q212 99 229 75 Q246 48 276 108 Q300 107 322 123 Q358 91 373 90 Q405 83 410 183 M176 177 Q194 197 224 194 Q266 187 282 165 Q318 185 369 191 Q395 202 410 184" />
             <!-- 눈 위 점과 볼의 세 줄 -->
             <ellipse class="brow" cx="228" cy="212" rx="4" ry="2.5" />
             <ellipse class="brow" cx="315" cy="225" rx="6" ry="3" />
-            <ellipse class="cheek" cx="173" cy="278" rx="29" ry="25" />
-            <ellipse class="cheek" cx="359" cy="299" rx="30" ry="26" />
-            <g class="blush-lines">
-              <path d="M161 272 l-5 11 M172 271 l-5 13 M183 274 l-5 11 M349 296 l-5 12 M360 296 l-5 12 M371 299 l-5 10" />
-            </g>
+            <g id="cheekLeft"><ellipse class="cheek" cx="173" cy="278" rx="29" ry="25" /><path class="blush-lines" d="M161 272 l-5 11 M172 271 l-5 13 M183 274 l-5 11" /></g>
+            <g id="cheekRight"><ellipse class="cheek" cx="359" cy="299" rx="30" ry="26" /><path class="blush-lines" d="M349 296 l-5 12 M360 296 l-5 12 M371 299 l-5 10" /></g>
             <g id="eyes">
               <ellipse class="eye" cx="223" cy="261" rx="21" ry="22" />
               <ellipse class="eye" cx="320" cy="270" rx="21" ry="21" />
@@ -62,11 +59,14 @@
             <g id="eyesClosed" style="display:none">
               <path class="eye-line" d="M203 261 Q223 278 243 260 M300 270 Q320 287 340 269" />
             </g>
-            <path id="mouth" class="mouth" d="M251 297 Q257 315 269 305 Q276 323 286 306 L291 299 M270 305 Q271 294 278 293" />
+            <g id="eyesHappy" style="display:none"><path class="eye-line" d="M202 263 Q222 239 243 262 M299 271 Q319 247 340 270" /></g>
+            <g id="eyesTense" style="display:none"><path class="eye-line" d="M203 256 Q220 270 242 260 M300 265 Q319 279 339 269" /></g>
+            <path id="mouth" class="mouth" d="M251 297 Q258 310 267 300 L273 307 Q282 310 291 298 M273 307 Q269 319 265 310" />
+            <ellipse id="tongue" class="tongue" cx="273" cy="328" rx="9" ry="6" style="display:none" />
             <path class="mouth-dot" d="M269 340 l5 1" />
           </svg>
 
-          <div class="tap-hint" id="tapHint">콕! 눌러보세요 👆</div>
+          <div class="tap-hint" id="tapHint">콕 누르거나 볼을 당겨보세요 👆</div>
         </div>
 
         <div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
