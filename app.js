@@ -1,4 +1,4 @@
-/* 몽글이 놀이터 — 오리지널 마스코트 인터랙션 + 미니게임
+/* 하치와레 놀이터 — 캐릭터 인터랙션 + 미니게임
    저장: localStorage. 혼자 쓰는 개인용 정적 웹앱 (GitHub Pages). */
 (() => {
   "use strict";
@@ -54,11 +54,11 @@
   const tapHint = $("#tapHint");
 
   const MOUTH = {
-    smile: "M92 140 Q100 148 108 140",
-    big:   "M88 138 Q100 154 112 138 Q100 150 88 138",
-    o:     "M100 140 m-6 0 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0",
-    flat:  "M90 143 L110 143",
-    sad:   "M92 146 Q100 138 108 146",
+    smile: "M92 125 Q100 133 108 125",
+    big:   "M88 124 Q100 140 112 124 Q100 145 88 124 Z",
+    o:     "M100 131 m-6 0 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0",
+    flat:  "M91 130 L109 130",
+    sad:   "M92 134 Q100 126 108 134",
   };
   function setMouth(k) { mouth.setAttribute("d", MOUTH[k]); }
 
@@ -148,8 +148,8 @@
   function renderSound() { soundBtn.textContent = state.sound ? "🔔" : "🔕"; soundBtn.classList.toggle("off", !state.sound); }
   soundBtn.addEventListener("click", () => { state.sound = !state.sound; renderSound(); save(); if (state.sound) sndPoke(); });
 
-  /* ================= 미니게임 1: 몽글이 잡기 ================= */
-  const MASCOT_SVG = `<svg viewBox="0 0 100 110"><ellipse cx="50" cy="60" rx="34" ry="32" fill="#fff" stroke="#f0d8e2" stroke-width="2"/><path d="M34 32 Q28 6 38 12 Q42 24 44 34 Z" fill="#fff" stroke="#f0d8e2" stroke-width="2"/><path d="M66 32 Q72 6 62 12 Q58 24 56 34 Z" fill="#fff" stroke="#f0d8e2" stroke-width="2"/><circle cx="40" cy="56" r="3" fill="#4a3b44"/><circle cx="60" cy="56" r="3" fill="#4a3b44"/><circle cx="33" cy="66" r="6" fill="#f7b7cf"/><circle cx="67" cy="66" r="6" fill="#f7b7cf"/><path d="M45 66 Q50 72 55 66" fill="none" stroke="#b06d86" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+  /* ================= 미니게임 1: 하치와레 잡기 ================= */
+  const MASCOT_SVG = `<svg viewBox="0 0 100 110" role="img" aria-label="하치와레"><path d="M17 44 14 10 Q14 5 19 9 L34 25 Q50 19 66 25 L81 9 Q86 5 86 10 L83 44 Q94 57 85 76 Q76 95 50 96 Q24 95 15 76 Q6 57 17 44Z" fill="#fff" stroke="#476176" stroke-width="2"/><path d="M17 44 14 10 Q14 5 19 9 L34 25 Q50 19 66 25 L81 9 Q86 5 86 10 L83 44 Q74 49 67 44 Q57 39 50 55 Q43 39 33 44 Q26 49 17 44Z" fill="#78b8d9" stroke="#476176" stroke-width="1.5"/><ellipse cx="36" cy="68" rx="3" ry="4.5" fill="#344957"/><ellipse cx="64" cy="68" rx="3" ry="4.5" fill="#344957"/><ellipse cx="24" cy="76" rx="6" ry="4" fill="#f4b5c5"/><ellipse cx="76" cy="76" rx="6" ry="4" fill="#f4b5c5"/><path d="M48 77 Q50 75 52 77 M45 82 Q50 87 55 82" fill="none" stroke="#344957" stroke-width="2" stroke-linecap="round"/></svg>`;
   const BOMB_SVG = `<svg viewBox="0 0 100 110"><circle cx="50" cy="64" r="30" fill="#3a3a44"/><rect x="46" y="26" width="8" height="12" rx="3" fill="#555"/><path d="M54 26 Q64 16 68 24" fill="none" stroke="#e08a2e" stroke-width="3" stroke-linecap="round"/><circle cx="69" cy="22" r="4" fill="#ffcf4d"/><circle cx="40" cy="60" r="4" fill="#fff" opacity=".5"/></svg>`;
 
   const holeGrid = $("#holeGrid");
@@ -223,7 +223,7 @@
     clearInterval(catchTimer); clearTimeout(popTimer);
     $$(".hole", holeGrid).forEach(h => h.classList.remove("up"));
     catchStartBtn.textContent = "다시 하기 ▶"; catchStartBtn.disabled = false;
-    let msg = `게임 끝! 점수 ${catchScore}점 🐰`;
+    let msg = `게임 끝! 점수 ${catchScore}점 🐱`;
     if (catchScore > state.catchBest) {
       state.catchBest = catchScore; catchBestEl.textContent = catchScore; save();
       msg = `🎉 신기록 ${catchScore}점!`; sndWin();
@@ -236,7 +236,7 @@
   /* ================= 미니게임 2: 카드 짝맞추기 ================= */
   const cardGrid = $("#cardGrid");
   const memMovesEl = $("#memMoves"), memTimeEl = $("#memTime"), memBestEl = $("#memBest");
-  const EMOJIS = ["🐰", "🍡", "🎀", "🍓", "⭐", "🍄", "🌸", "🫧"];
+  const EMOJIS = ["🐱", "🍡", "🎀", "🍓", "⭐", "🍄", "🌸", "🫧"];
   let memMoves = 0, memFlipped = [], memMatched = 0, memTime = 0, memTimer = null, memLock = false, memStarted = false;
 
   memBestEl.textContent = state.memBest == null ? "-" : state.memBest + "번";
